@@ -26,13 +26,27 @@ battleships_menu :-
             error_msg('Invalid option!')
         ).
 
-choose_menu_option(1).
+choose_menu_option(1) :-
+    repeat,
+        (
+            display_choose_board,
+            read_board_option(Option),
+            choose_board(Option), !;
+
+            error_msg('Invalid option')
+        ).
+
 choose_menu_option(2).
 choose_menu_option(3).
-choose_menu_option(4). 
-choose_menu_option(5).
-choose_menu_option(6).
-choose_menu_option(7).
+
+choose_board(1).
+choose_board(2).
+choose_board(3).
+choose_board(4).
+choose_board(5).
+choose_board(6).
+choose_board(7) :-
+    battleships_menu, !.
 
 
 solve :-
