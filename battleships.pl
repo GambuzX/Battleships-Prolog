@@ -6,10 +6,15 @@
 
 /**
  * Battleships
+ * battleships(+Path)
  * Main function of the puzzle
+ *
+ * Path -> Path to this file (Files to be used should be inside a folder files)  
  */
-battleships :-
-    battleships_menu, !.
+battleships(Path) :-
+    asserta(path(Path)), !,
+    battleships_menu, !,
+    retract(path(_)).
 
 /**
  * Battleships Menu
@@ -39,12 +44,37 @@ choose_menu_option(1) :-
 choose_menu_option(2).
 choose_menu_option(3).
 
-choose_board(1).
-choose_board(2).
-choose_board(3).
-choose_board(4).
-choose_board(5).
+get_file_path(RelPath, AbsPath) :-
+    path(P),
+    atom_concat(P, RelPath, AbsPath), !.
+
+choose_board(1) :-
+    get_file_path('files/board_1.txt', FileName),
+    read(FileName, Row/Column, Board, RowVal, ColVal),
+    battleships_menu, !.
+
+choose_board(2) :-
+    get_file_path('files/board_2.txt', FileName),
+    read(FileName, Row/Column, Board, RowVal, ColVal),
+    battleships_menu, !.
+
+choose_board(3) :-
+    get_file_path('files/board_3.txt', FileName),
+    read(FileName, Row/Column, Board, RowVal, ColVal),
+    battleships_menu, !.
+
+choose_board(4) :-
+    get_file_path('files/board_4.txt', FileName),
+    read(FileName, Row/Column, Board, RowVal, ColVal),
+    battleships_menu, !.
+
+choose_board(5) :-
+    get_file_path('files/board_5.txt', FileName),
+    read(FileName, Row/Column, Board, RowVal, ColVal),
+    battleships_menu, !.
+
 choose_board(6).
+
 choose_board(7) :-
     battleships_menu, !.
 
