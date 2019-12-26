@@ -1,6 +1,41 @@
 :-use_module(library(clpfd)).
 
+:-include('display.pl').
+:-include('input.pl').
+:-include('files.pl').
+
+/**
+ * Battleships
+ * Main function of the puzzle
+ */
 battleships :-
+    battleships_menu, !.
+
+/**
+ * Battleships Menu
+ * battleships_menu
+ * Shows the puzzle menu and choose the selected option
+ */
+battleships_menu :-
+    repeat,
+        (
+            display_menu_options,
+            read_menu_option(Option),
+            choose_menu_option(Option), !;
+
+            error_msg('Invalid option!')
+        ).
+
+choose_menu_option(1).
+choose_menu_option(2).
+choose_menu_option(3).
+choose_menu_option(4). 
+choose_menu_option(5).
+choose_menu_option(6).
+choose_menu_option(7).
+
+
+solve :-
     Shapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
     Positions = [
         X1, X2, X3, X4, X5, X6, X7, X8, X9, X10,
@@ -37,5 +72,3 @@ battleships :-
         sbox(6, [0,0], [4, 1]),
         sbox(7, [0,0], [1, 4])
     ].
-
-
