@@ -132,18 +132,15 @@ solve(ShipsShapes, Positions) :-
         sbox(7, [0,0], [1, 4])
     ],
 
-
-    geost(Ships, Shapes, 
-        % Options
-        [
-            /*
-                limit all coordinates of the objects to be in range [1,10]
-                geost only guarantees that the object origin is inside the specified domain
-            */
-            bounding_box([1, 1], [11, 11])
-        ],
-
+    Options = [
         /*
+            limit all coordinates of the objects to be in range [1,10]
+            geost only guarantees that the object origin is inside the specified domain
+        */
+        bounding_box([1, 1], [11, 11])
+    ],
+
+    /*
         Geost Rules (https://web.imt-atlantique.fr/x-info/ppc/bib/pub/carlsson-al-CP-2008.pdf)
 
         k is the dimension, in this case 2.
@@ -158,40 +155,34 @@ solve(ShipsShapes, Positions) :-
             - o.oid : unique object id (integer)
             - o.sid : shape id (integer if fixed shape, or domain variable for polymorphic objects)
             - o.x[d] : origin (1 <= d <= k)
-        
+    */
+    Rules = [ 
+        /* sum of origin value with shape offset in dimension D*/
+        (origin(Obj, Shape, Dim) ---> Obj^x(Dim) + Shape^t(Dim)),
 
-        */
-        [ 
-            /* sum of origin value with shape offset in dimension D*/
-            (origin(O1,S1,D) ---> O1^x(D)+S1^t(D))),
+        /* sum of origin value with shape offset and size in dimension D */
+        (end(Obj, Shape, Dim) ---> Obj^x(Dim) + Shape^t(Dim) + Shape^l(Dim)),
 
-            /* sum of origin value with shape offset and size in dimension D */
-            (end(O1,S1,D) ---> O1^x(D)+S1^t(D)+S1^l(D)),
+        (tooclose(Obj1, Obj2, Shape1, Shape2, Dim) --->
+            end(Obj1, Shape1, Dim) + 1 #> origin(Obj2, Shape2, Dim) #/\
+            end(Obj2, Shape2, Dim) + 1 #> origin(Obj1, Shape1, Dim)),
 
-            /*
-                Check if objects are near by 2 units
-                O1 -> Object 1
-                O2 -> Object 2
-                S1 -> Shape box of object 1
-                S2 -> Shape box of object 2
-                D -> Dimension
-            */
-            (tooclose(O1,O2,S1,S2,D) --->
-                end(O1,S1,D)+2 #> origin(O2,S2,D) #/\
-                end(O2,S2,D)+2 #> origin(O1,S1,D)),
+        % assure objects O1 and O2 are apart at least 1 unit
+        (apart(Obj1, Obj2) --->
+            forall(Shape1, sboxes([Obj1^sid]), % shape boxes of object O1, could be more than 1
+                forall(Shape2, sboxes([Obj2^sid]),% shape boxes of object O2
+                    #\ tooclose(Obj1, Obj2, Shape1, Shape2, 1) #\/ % check horizontally
+                    #\ tooclose(Obj1, Obj2, Shape1, Shape2, 2)))), % check vertically
 
-            % assure objects O1 and O2 are apart at least 2 units
-            (apart(O1,O2) --->
-                forall(S1,sboxes([O1^sid]), % shape box of object O1
-                    forall(S2,sboxes([O2^sid]), % shape box of object O2
-                        #\ tooclose(O1,O2,S1,S2,1) #\/ % check horizontally
-                        #\ tooclose(O1,O2,S1,S2,2)))), % check vertically
+        % for all combinations of different objects
+        (forall(Obj1, objects([1,2,3,4,5,6,7,8,9,10]),
+            forall(Obj2, objects([1,2,3,4,5,6,7,8,9,10]),
+                % if different objects, must be apart 1 unit
+                (Obj1^oid #= Obj2^oid) #\/ apart(Obj1, Obj2))))
+    ],
 
-            % for all combinations of different objects
-            (forall(O1,objects([1,2,3]),
-                forall(O2,objects([4,5,6]), apart(O1,O2))))
-        ]
-    ),
+
+    geost(Ships, Shapes, Options, Rules),
     append(ShipsShapes, Positions, AllVars),
     labeling([], AllVars),
     write(ShipsShapes),
