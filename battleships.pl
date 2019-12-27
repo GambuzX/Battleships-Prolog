@@ -1,8 +1,9 @@
-:-use_module(library(clpfd)).
+:- use_module(library(clpfd)).
+:- use_module(library(lists)).
 
-:-include('display.pl').
-:-include('input.pl').
-:-include('files.pl').
+:- include('display.pl').
+:- include('input.pl').
+:- include('files.pl').
 
 /**
  * Battleships
@@ -83,15 +84,15 @@ choose_board(7) :-
     TODO
 
     assure count of each shape - y
-    ships not touching each other - n
-    number in lines and cols - n
+    ships not touching each other - y
+    numbers in lines and cols - n
     water blocks - n
     get answer from result of labeling - n
     match already existing ships - n
     generate boards - n
     read from files - n
     generalize - n
-
+    optimizations - n
 */
 solve(ShipsShapes, Positions) :-
     ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
@@ -99,6 +100,9 @@ solve(ShipsShapes, Positions) :-
         X1, X2, X3, X4, X5, X6, X7, X8, X9, X10,
         Y1, Y2, Y3, Y4, Y5, Y6, Y7, Y8, Y9, Y10
     ],
+
+    HorizontalCounts = [4, 1, 3, 0, 3, 0, 4, 0, 2, 3],
+    VerticalCounts = [1, 4, 1, 0, 4, 4, 1, 3, 1, 1],
 
     % 1 indexed!!!!
     domain(Positions, 1, 10),
@@ -132,6 +136,8 @@ solve(ShipsShapes, Positions) :-
         sbox(7, [0,0], [1, 4])
     ],
 
+    force_horizontal_ships_counts(1, HorizontalCounts, Ships, Shapes),
+
     Options = [
         /*
             limit all coordinates of the objects to be in range [1,10]
@@ -155,6 +161,8 @@ solve(ShipsShapes, Positions) :-
             - o.oid : unique object id (integer)
             - o.sid : shape id (integer if fixed shape, or domain variable for polymorphic objects)
             - o.x[d] : origin (1 <= d <= k)
+        
+        card(quantified variable, list of terms, lower bound, upper bound, fol)
     */
     Rules = [ 
         /* sum of origin value with shape offset in dimension D*/
@@ -175,10 +183,23 @@ solve(ShipsShapes, Positions) :-
                     #\ tooclose(Obj1, Obj2, Shape1, Shape2, 2)))), % check vertically
 
         % for all combinations of different objects
-        (forall(Obj1, objects([1,2,3,4,5,6,7,8,9,10]),
+        (forall(Obj1, objects([1,2,3,4,5,6,7,8,9,10]), % TODO these ids must come from outside and not be hardcoded
             forall(Obj2, objects([1,2,3,4,5,6,7,8,9,10]),
                 % if different objects, must be apart 1 unit
-                (Obj1^oid #= Obj2^oid) #\/ apart(Obj1, Obj2))))
+                (Obj1^o id #= Obj2^oid) #\/ apart(Obj1, Obj2))))
+
+        /*(check_obj_horizontal(Obj, Shape, Y) --->
+            origin(Obj, Shape, 2) #<= Y #/\ end(Obj, Shape, 2) #>= Y #\/
+            origin(Obj, Shape, 2) #>= Y #/\ end(Obj, Shape, 2) #<= Y
+        ),
+
+        (assure_horizontal_count(Y) --->
+            card(Obj, objects([1,2,3,4,5,6,7,8,9,10]), 1, 1, % lower and upper bound 
+                forall(Shape, sboxes([Obj^sid]),
+                    check_obj_horizontal(Obj, Shape, Y)))
+        ),
+
+        (forall(Y, [1,2,3,4,5,6,7,8,9,10], assure_horizontal_count(Y)))*/
     ],
 
 
@@ -187,3 +208,47 @@ solve(ShipsShapes, Positions) :-
     labeling([], AllVars),
     write(ShipsShapes),
     write(Positions).
+
+/*
+    Find shape from list Shapes with ID equal to ShapeID
+*/
+find_shape(_, [], _) :- !.
+
+find_shape(ShapeID, [CurrShape | Rest], CurrShape) :-
+    sbox(ShapeID, _, _) = CurrShape, !.
+
+find_shape(ShapeID, [CurrShape | Rest], Res) :-
+    sbox(ShapeID2, _, _) = CurrShape,
+    ShapeID \= ShapeID2,
+    find_shape(ShapeID, Rest, Res).
+
+/*
+    Restrict number of ships in a row equal to Target
+*/
+restrict_ships_in_row(_, [], _, 0).
+restrict_ships_in_row(Row, [object(_, CurrShapeID, [_, Y]) | RestShips], Shapes, Target) :-
+    find_shape(CurrShapeID, Shapes, sbox(_, _, [_, Height])),
+
+    EndY #= Y + Height,
+
+    ((Y #=< Row #/\ EndY #>= Row) #\/ (Y #>= Row #/\ EndY #=< Row)) #<=> Matched,
+    Target #= NextTarget + Matched,
+    restrict_ships_in_row(Row, RestShips, Shapes, NextTarget).
+
+/*
+    Restrict number of ships per row to the given values
+*/
+force_horizontal_ships_counts(0, _, _, _).
+force_horizontal_ships_counts(Iter, HorizontalCounts, Ships, Shapes) :-
+    Iter > 0,
+    length(HorizontalCounts, L),
+
+    % get curr target value
+    EleIndex is L - Iter + 1,
+    nth1(EleIndex, HorizontalCounts, CurrTarget),
+
+    % force value to be the target
+    restrict_ships_in_row(Iter, Ships, Shapes, CurrTarget),    
+    
+    Next is Iter-1,
+    force_horizontal_ships_counts(Next, HorizontalCounts, Ships, Shapes).
