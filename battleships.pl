@@ -79,8 +79,22 @@ choose_board(7) :-
     battleships_menu, !.
 
 
-solve :-
-    Shapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
+/*
+    TODO
+
+    assure count of each shape - y
+    ships not touching each other - n
+    number in lines and cols - n
+    water blocks - n
+    get answer from result of labeling - n
+    match already existing ships - n
+    generate boards - n
+    read from files - n
+    generalize - n
+
+*/
+solve(ShipsShapes, Positions) :-
+    ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
     Positions = [
         X1, X2, X3, X4, X5, X6, X7, X8, X9, X10,
         Y1, Y2, Y3, Y4, Y5, Y6, Y7, Y8, Y9, Y10
@@ -107,12 +121,22 @@ solve :-
         object(10, S10, [X10, Y10])
     ],
 
+    % horizontal and vertical shapes for each ship size
     Shapes = [
-        sbox(1, [0,0], [1,1]),
+        sbox(1, [0,0], [1, 1]),
         sbox(2, [0,0], [1, 2]),
         sbox(3, [0,0], [2, 1]),
         sbox(4, [0,0], [3, 1]),
         sbox(5, [0,0], [1, 3]),
         sbox(6, [0,0], [4, 1]),
         sbox(7, [0,0], [1, 4])
-    ].
+    ],
+
+
+    geost(Ships, Shapes, [
+        bounding_box([1, 1], [11, 11])
+    ]),
+    append(ShipsShapes, Positions, AllVars),
+    labeling([], AllVars),
+    write(ShipsShapes),
+    write(Positions).
