@@ -133,9 +133,65 @@ solve(ShipsShapes, Positions) :-
     ],
 
 
-    geost(Ships, Shapes, [
-        bounding_box([1, 1], [11, 11])
-    ]),
+    geost(Ships, Shapes, 
+        % Options
+        [
+            /*
+                limit all coordinates of the objects to be in range [1,10]
+                geost only guarantees that the object origin is inside the specified domain
+            */
+            bounding_box([1, 1], [11, 11])
+        ],
+
+        /*
+        Geost Rules (https://web.imt-atlantique.fr/x-info/ppc/bib/pub/carlsson-al-CP-2008.pdf)
+
+        k is the dimension, in this case 2.
+        Below, d means the dimension to extract value.
+
+        Shapes' properties (integers):
+            - s.sid : shape id
+            - s.t[d] : shift offset (1 <= d <= k)
+            - s.l[d] : sizes (s.l[d] > 0 and 1 <= d <= k)
+
+        Objects' properties:
+            - o.oid : unique object id (integer)
+            - o.sid : shape id (integer if fixed shape, or domain variable for polymorphic objects)
+            - o.x[d] : origin (1 <= d <= k)
+        
+
+        */
+        [ 
+            /* sum of origin value with shape offset in dimension D*/
+            (origin(O1,S1,D) ---> O1^x(D)+S1^t(D))),
+
+            /* sum of origin value with shape offset and size in dimension D */
+            (end(O1,S1,D) ---> O1^x(D)+S1^t(D)+S1^l(D)),
+
+            /*
+                Check if objects are near by 2 units
+                O1 -> Object 1
+                O2 -> Object 2
+                S1 -> Shape box of object 1
+                S2 -> Shape box of object 2
+                D -> Dimension
+            */
+            (tooclose(O1,O2,S1,S2,D) --->
+                end(O1,S1,D)+2 #> origin(O2,S2,D) #/\
+                end(O2,S2,D)+2 #> origin(O1,S1,D)),
+
+            % assure objects O1 and O2 are apart at least 2 units
+            (apart(O1,O2) --->
+                forall(S1,sboxes([O1^sid]), % shape box of object O1
+                    forall(S2,sboxes([O2^sid]), % shape box of object O2
+                        #\ tooclose(O1,O2,S1,S2,1) #\/ % check horizontally
+                        #\ tooclose(O1,O2,S1,S2,2)))), % check vertically
+
+            % for all combinations of different objects
+            (forall(O1,objects([1,2,3]),
+                forall(O2,objects([4,5,6]), apart(O1,O2))))
+        ]
+    ),
     append(ShipsShapes, Positions, AllVars),
     labeling([], AllVars),
     write(ShipsShapes),
