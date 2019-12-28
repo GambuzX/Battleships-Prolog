@@ -205,8 +205,8 @@ solve(ShipsShapes, Positions) :-
         (forall(Y, [1,2,3,4,5,6,7,8,9,10], assure_horizontal_count(Y)))*/
     ],
     
-    force_horizontal_ships_counts(1, HorizontalCounts, Ships, Shapes),
     geost(Ships, Shapes, Options, Rules),
+    force_horizontal_ships_counts(1, HorizontalCounts, Ships, Shapes),
     append(ShipsShapes, Positions, AllVars),
     labeling([median], AllVars),
     write(ShipsShapes),
@@ -225,17 +225,19 @@ find_shape(ShapeID, [CurrShape | Rest], Res) :-
     find_shape(ShapeID, Rest, Res).
 
 /*
-    Restrict number of ships in a row equal to Target
+    Count number of ships in a row
 */
-restrict_ships_in_row(_, [], _, 0).
-restrict_ships_in_row(Row, [object(_, CurrShapeID, [_, Y]) | RestShips], Shapes, Target) :-
-    find_shape(CurrShapeID, Shapes, sbox(_, _, [_, Height])),
+count_ships_in_row(_, [], _, 0).
+count_ships_in_row(Row, [object(_, CurrShapeID, [_, Y]) | RestShips], Shapes, Count) :-    
+    
+    find_shape(CurrShapeID, Shapes, CurrShape),
+    sbox(_, _, [_, Height]) = CurrShape,
 
     EndY #= Y + Height,
 
     (Y #=< Row #/\ EndY #>= Row) #<=> Matched,
-    Target #= NextTarget + Matched,
-    restrict_ships_in_row(Row, RestShips, Shapes, NextTarget).
+    Count #= NextCount + Matched,
+    count_ships_in_row(Row, RestShips, Shapes, NextCount).
 
 /*
     Restrict number of ships per row to the given values
@@ -251,7 +253,8 @@ force_horizontal_ships_counts(Iter, HorizontalCounts, Ships, Shapes) :-
     nth1(Iter, HorizontalCounts, CurrTarget),
 
     % force value to be the target
-    restrict_ships_in_row(Iter, Ships, Shapes, CurrTarget),    
+    count_ships_in_row(Iter, Ships, Shapes, CurrCount),
+    CurrCount #= CurrTarget,    
     
     Next is Iter+1,
     force_horizontal_ships_counts(Next, HorizontalCounts, Ships, Shapes).
