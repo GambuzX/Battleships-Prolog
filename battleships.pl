@@ -127,7 +127,7 @@ choose_board(7) :-
     the board so that the y increases upwards. As such, the values for the sum
     of the ships on the rows are inverted.
 */
-solve(ShipsShapes, Positions) :-
+solve_battleships(ShipsShapes, Positions) :-
     ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
     Positions = [
         X1, X2, X3, X4, X5, X6, X7, X8, X9, X10,
@@ -161,12 +161,12 @@ solve(ShipsShapes, Positions) :-
     % horizontal and vertical shapes for each ship size
     Shapes = [
         sbox(1, [0,0], [1, 1]),
-        sbox(2, [0,0], [2, 1]),
-        sbox(3, [0,0], [1, 2]),
-        sbox(4, [0,0], [3, 1]),
-        sbox(5, [0,0], [1, 3]),
-        sbox(6, [0,0], [4, 1]),
-        sbox(7, [0,0], [1, 4])
+        sbox(2, [0,0], [1, 2]),
+        sbox(3, [0,0], [2, 1]),
+        sbox(4, [0,0], [1, 3]),
+        sbox(5, [0,0], [3, 1]),
+        sbox(6, [0,0], [1, 4]),
+        sbox(7, [0,0], [4, 1])
     ],
 
     Options = [
@@ -217,26 +217,13 @@ solve(ShipsShapes, Positions) :-
         (forall(Obj1, objects([1,2,3,4,5,6,7,8,9,10]), % TODO these ids must come from outside and not be hardcoded
             forall(Obj2, objects([1,2,3,4,5,6,7,8,9,10]),
                 % if different objects, must be apart 1 unit
-                (Obj1^oid #= Obj2^oid) #\/ apart(Obj1, Obj2))))
-
-        /*(check_obj_horizontal(Obj, Shape, Y) --->
-            origin(Obj, Shape, 2) #<= Y #/\ end(Obj, Shape, 2) #>= Y #\/
-            origin(Obj, Shape, 2) #>= Y #/\ end(Obj, Shape, 2) #<= Y
-        ),
-
-        (assure_horizontal_count(Y) --->
-            card(Obj, objects([1,2,3,4,5,6,7,8,9,10]), 1, 1, % lower and upper bound 
-                forall(Shape, sboxes([Obj^sid]),
-                    check_obj_horizontal(Obj, Shape, Y)))
-        ),
-
-        (forall(Y, [1,2,3,4,5,6,7,8,9,10], assure_horizontal_count(Y)))*/
+                (Obj2^oid #>= Obj1^oid) #\/ apart(Obj1, Obj2))))
     ],
     
     geost(Ships, Shapes, Options, Rules),
-    force_horizontal_ships_counts(1, HorizontalCounts, Ships, Shapes),
-    append(ShipsShapes, Positions, AllVars),
-    labeling([median], AllVars),
+    %force_horizontal_ships_counts(1, HorizontalCounts, Ships, Shapes),
+    append(Positions, ShipsShapes, AllVars),
+    labeling([ffc, median], AllVars),
     write(ShipsShapes),
     write(Positions).
 
