@@ -13,6 +13,7 @@
  * Path -> Path to this file (Files to be used should be inside a folder files)  
  */
 battleships(Path) :-
+    display_game_name,
     asserta(path(Path)), !,
     battleships_menu, !,
     retract(path(_)).
@@ -32,6 +33,15 @@ battleships_menu :-
             error_msg('Invalid option!')
         ).
 
+/**
+ * Choose menu option
+ * choose_menu_option(+Option)
+ *
+ * Option -> Selected option:
+ *              1- Solve board;
+ *              2- Generate board;
+ *              3- Exit.
+ */
 choose_menu_option(1) :-
     repeat,
         (
@@ -45,10 +55,28 @@ choose_menu_option(1) :-
 choose_menu_option(2).
 choose_menu_option(3).
 
+/**
+ * Get File Path
+ * get_file_path(+RelativePath, -AbsolutePath)
+ * Gets the absolute path to file given a relative path from the main file
+ *
+ * RelativePath -> The relative path from the main file
+ * AbsolutePath -> The absolute file to the selected file
+ */
 get_file_path(RelPath, AbsPath) :-
     path(P),
     atom_concat(P, RelPath, AbsPath), !.
 
+/**
+ * Choose Board
+ * choose_board(+Option)
+ * Chooses the board that will be solved
+ *
+ * Option -> The selected option from the menu
+ *              1..5- Default files;
+ *              6- Other file created by our generator;
+ *              7- Go back to the menu.
+ */
 choose_board(1) :-
     get_file_path('files/board_1.txt', FileName),
     read(FileName, Row/Column, Board, RowVal, ColVal),
