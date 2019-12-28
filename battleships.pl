@@ -93,6 +93,11 @@ choose_board(7) :-
     read from files - n
     generalize - n
     optimizations - n
+
+
+        Since geost shapes objects from bottom to top, we decided to invert
+    the board so that the y increases upwards. As such, the values for the sum
+    of the ships on the rows are inverted.
 */
 solve(ShipsShapes, Positions) :-
     ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
@@ -128,15 +133,13 @@ solve(ShipsShapes, Positions) :-
     % horizontal and vertical shapes for each ship size
     Shapes = [
         sbox(1, [0,0], [1, 1]),
-        sbox(2, [0,0], [1, 2]),
-        sbox(3, [0,0], [2, 1]),
+        sbox(2, [0,0], [2, 1]),
+        sbox(3, [0,0], [1, 2]),
         sbox(4, [0,0], [3, 1]),
         sbox(5, [0,0], [1, 3]),
         sbox(6, [0,0], [4, 1]),
         sbox(7, [0,0], [1, 4])
     ],
-
-    force_horizontal_ships_counts(1, HorizontalCounts, Ships, Shapes),
 
     Options = [
         /*
@@ -186,7 +189,7 @@ solve(ShipsShapes, Positions) :-
         (forall(Obj1, objects([1,2,3,4,5,6,7,8,9,10]), % TODO these ids must come from outside and not be hardcoded
             forall(Obj2, objects([1,2,3,4,5,6,7,8,9,10]),
                 % if different objects, must be apart 1 unit
-                (Obj1^o id #= Obj2^oid) #\/ apart(Obj1, Obj2))))
+                (Obj1^oid #= Obj2^oid) #\/ apart(Obj1, Obj2))))
 
         /*(check_obj_horizontal(Obj, Shape, Y) --->
             origin(Obj, Shape, 2) #<= Y #/\ end(Obj, Shape, 2) #>= Y #\/
@@ -201,25 +204,24 @@ solve(ShipsShapes, Positions) :-
 
         (forall(Y, [1,2,3,4,5,6,7,8,9,10], assure_horizontal_count(Y)))*/
     ],
-
-
+    
+    force_horizontal_ships_counts(1, HorizontalCounts, Ships, Shapes),
     geost(Ships, Shapes, Options, Rules),
     append(ShipsShapes, Positions, AllVars),
-    labeling([], AllVars),
+    labeling([median], AllVars),
     write(ShipsShapes),
     write(Positions).
 
 /*
     Find shape from list Shapes with ID equal to ShapeID
 */
-find_shape(_, [], _) :- !.
-
 find_shape(ShapeID, [CurrShape | Rest], CurrShape) :-
-    sbox(ShapeID, _, _) = CurrShape, !.
+    sbox(CurrShapeID, _, _) = CurrShape,
+    ShapeID #= CurrShapeID.
 
 find_shape(ShapeID, [CurrShape | Rest], Res) :-
     sbox(ShapeID2, _, _) = CurrShape,
-    ShapeID \= ShapeID2,
+    ShapeID #\= ShapeID2,
     find_shape(ShapeID, Rest, Res).
 
 /*
@@ -231,24 +233,25 @@ restrict_ships_in_row(Row, [object(_, CurrShapeID, [_, Y]) | RestShips], Shapes,
 
     EndY #= Y + Height,
 
-    ((Y #=< Row #/\ EndY #>= Row) #\/ (Y #>= Row #/\ EndY #=< Row)) #<=> Matched,
+    (Y #=< Row #/\ EndY #>= Row) #<=> Matched,
     Target #= NextTarget + Matched,
     restrict_ships_in_row(Row, RestShips, Shapes, NextTarget).
 
 /*
     Restrict number of ships per row to the given values
 */
-force_horizontal_ships_counts(0, _, _, _).
+force_horizontal_ships_counts(I, Vals, _, _) :-
+    length(Vals, L),
+    I > L.
 force_horizontal_ships_counts(Iter, HorizontalCounts, Ships, Shapes) :-
-    Iter > 0,
     length(HorizontalCounts, L),
+    Iter =< L,
 
     % get curr target value
-    EleIndex is L - Iter + 1,
-    nth1(EleIndex, HorizontalCounts, CurrTarget),
+    nth1(Iter, HorizontalCounts, CurrTarget),
 
     % force value to be the target
     restrict_ships_in_row(Iter, Ships, Shapes, CurrTarget),    
     
-    Next is Iter-1,
+    Next is Iter+1,
     force_horizontal_ships_counts(Next, HorizontalCounts, Ships, Shapes).
