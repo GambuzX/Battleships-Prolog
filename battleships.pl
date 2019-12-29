@@ -173,12 +173,14 @@ solve_battleships(Rows/Columns, NShips, Board, HorizontalCounts, VerticalCounts)
         sbox(7, [0,0], [4, 1])
     ],
 
+    Bounding_box_x is Columns+1,
+    Bounding_box_y is Rows+1,
     Options = [
         /*
             limit all coordinates of the objects to be in range [1,10]
             geost only guarantees that the object origin is inside the specified domain
         */
-        bounding_box([1, 1], [11, 11])
+        bounding_box([1, 1], [Bounding_box_x, Bounding_box_y])
     ],
 
     /*
