@@ -119,13 +119,14 @@ test :-
 
     assure count of each shape - y
     ships not touching each other - y
-    numbers in lines and cols - n
+    numbers in lines and cols - y
     water blocks - n
     get answer from result of labeling - n
     match already existing ships - n
     generate boards - n
     read from files - n
-    generalize - n
+    generalize - y
+    variable number of ships - n
     optimizations - n
 
 
@@ -135,6 +136,7 @@ test :-
     The board should be imagined with increasing y and figures growing upwards.
 */
 solve_battleships(Rows/Columns, NShips, Board, HorizontalCounts, VerticalCounts) :-
+
     ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
     X_Coords = [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10],
     Y_Coords = [Y1, Y2, Y3, Y4, Y5, Y6, Y7, Y8, Y9, Y10],
@@ -236,6 +238,18 @@ solve_battleships(Rows/Columns, NShips, Board, HorizontalCounts, VerticalCounts)
     write(X_Coords),
     write(Y_Coords).
 
+/*
+create_ships_shapes(I, N, []]) :-
+    Iter > N.
+create_ships_shapes(Iter, NShips, [NewShape | RestShapes]) :-
+    Iter =< N,
+    Shape1 = 1,
+    Shape2 = 1,
+    domain([NewShape], Shape1, Shape2),
+    Next is Iter+1,
+    create_ships_shapes(Next, NShips, RestShapes).
+*/
+
 
 /* Collect the IDs of the objects in a list */
 getShipsIDs([], []).
@@ -243,20 +257,21 @@ getShipsIDs([object(ID, _, _) | Rest], [ID | RestIDs]) :-
     getShipsIDs(Rest, RestIDs).
 
 
+apply_shape_size_restrictions(ShapeID, Width, Height) :-
+    (ShapeID #= 1 #/\ Width #= 1 #/\ Height #= 1) #\/
+    (ShapeID #= 2 #/\ Width #= 1 #/\ Height #= 2) #\/
+    (ShapeID #= 3 #/\ Width #= 2 #/\ Height #= 1) #\/
+    (ShapeID #= 4 #/\ Width #= 1 #/\ Height #= 3) #\/
+    (ShapeID #= 5 #/\ Width #= 3 #/\ Height #= 1) #\/
+    (ShapeID #= 6 #/\ Width #= 1 #/\ Height #= 4) #\/
+    (ShapeID #= 7 #/\ Width #= 4 #/\ Height #= 1).
+
 /*
     Count number of ships in a row
 */
 count_ships_in_row(_, [], 0).
-count_ships_in_row(Row, [object(_, CurrShapeID, [_, Y]) | RestShips], Count) :-    
-    
-    (CurrShapeID #= 1 #/\ Width #= 1 #/\ Height #= 1) #\/
-    (CurrShapeID #= 2 #/\ Width #= 1 #/\ Height #= 2) #\/
-    (CurrShapeID #= 3 #/\ Width #= 2 #/\ Height #= 1) #\/
-    (CurrShapeID #= 4 #/\ Width #= 1 #/\ Height #= 3) #\/
-    (CurrShapeID #= 5 #/\ Width #= 3 #/\ Height #= 1) #\/
-    (CurrShapeID #= 6 #/\ Width #= 1 #/\ Height #= 4) #\/
-    (CurrShapeID #= 7 #/\ Width #= 4 #/\ Height #= 1),
-
+count_ships_in_row(Row, [object(_, CurrShapeID, [_, Y]) | RestShips], Count) :-  
+    apply_shape_size_restrictions(CurrShapeID, Width, Height),
     EndY #= Y + Height - 1,
 
     (Y #=< Row #/\ EndY #>= Row) #<=> Matched,
@@ -287,16 +302,8 @@ force_horizontal_ships_counts(Iter, HorizontalCounts, Ships) :-
     Count number of ships in a column
 */
 count_ships_in_col(_, [], 0).
-count_ships_in_col(Col, [object(_, CurrShapeID, [X, _]) | RestShips], Count) :-    
-    
-    (CurrShapeID #= 1 #/\ Width #= 1 #/\ Height #= 1) #\/
-    (CurrShapeID #= 2 #/\ Width #= 1 #/\ Height #= 2) #\/
-    (CurrShapeID #= 3 #/\ Width #= 2 #/\ Height #= 1) #\/
-    (CurrShapeID #= 4 #/\ Width #= 1 #/\ Height #= 3) #\/
-    (CurrShapeID #= 5 #/\ Width #= 3 #/\ Height #= 1) #\/
-    (CurrShapeID #= 6 #/\ Width #= 1 #/\ Height #= 4) #\/
-    (CurrShapeID #= 7 #/\ Width #= 4 #/\ Height #= 1),
-
+count_ships_in_col(Col, [object(_, CurrShapeID, [X, _]) | RestShips], Count) :-   
+    apply_shape_size_restrictions(CurrShapeID, Width, Height),
     EndX #= X + Width - 1,
 
     (X #=< Col #/\ EndX #>= Col) #<=> Matched,
