@@ -324,13 +324,12 @@ solve_battleships_7x7(ShipsShapes, Positions) :-
     ],
     
     geost(Ships, Shapes, Options, Rules),
-    %force_horizontal_ships_counts(1, HorizontalCounts, Ships),
+    force_horizontal_ships_counts(1, HorizontalCounts, Ships),
     force_vertical_ships_counts(1, VerticalCounts, Ships),
     append(Positions, ShipsShapes, AllVars),
     labeling([], AllVars),
     write(ShipsShapes),
-    write(Positions), nl,
-    fail.
+    write(Positions).
 
 /*
     Count number of ships in a row
@@ -406,4 +405,4 @@ force_vertical_ships_counts(Iter, VerticalCounts, Ships) :-
     CurrCount #= CurrTarget,    
     
     Next is Iter+1,
-    force_horizontal_ships_counts(Next, VerticalCounts, Ships).
+    force_vertical_ships_counts(Next, VerticalCounts, Ships).
