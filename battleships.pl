@@ -126,6 +126,7 @@ choose_board(7) :-
         Since geost shapes objects from bottom to top, we decided to invert
     the board so that the y increases upwards. As such, the values for the sum
     of the ships on the rows are inverted.
+    The board should be imagined with increasing y and figures growing upwards.
 */
 solve_battleships_10x10(ShipsShapes, Positions) :-
     ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
@@ -244,6 +245,14 @@ solve_battleships_7x7(ShipsShapes, Positions) :-
     domain([S4, S5], 2, 3),
     domain([S6], 4, 5),
 
+    X2 #>= X1,
+    Y2 #>= Y1,
+    X3 #>= X2,
+    Y3 #>= Y2,
+    
+    X5 #>= X4,
+    Y5 #>= Y4,
+
     Ships = [
         object(1, S1, [X1, Y1]),
         object(2, S2, [X2, Y2]),
@@ -252,6 +261,7 @@ solve_battleships_7x7(ShipsShapes, Positions) :-
         object(5, S5, [X5, Y5]),
         object(6, S6, [X6, Y6])
     ],
+    ShipsIDs = [1,2,3,4,5,6],
 
     % horizontal and vertical shapes for each ship size
     Shapes = [
@@ -307,44 +317,46 @@ solve_battleships_7x7(ShipsShapes, Positions) :-
                     #\ tooclose(Obj1, Obj2, Shape1, Shape2, 2)))), % check vertically
 
         % for all combinations of different objects
-        (forall(Obj1, objects([1,2,3,4,5,6]), % TODO these ids must come from outside and not be hardcoded
-            forall(Obj2, objects([1,2,3,4,5,6]),
+        (forall(Obj1, objects(ShipsIDs),
+            forall(Obj2, objects(ShipsIDs),
                 % if different objects, must be apart 1 unit
                 (Obj2^oid #>= Obj1^oid) #\/ apart(Obj1, Obj2))))
     ],
     
     geost(Ships, Shapes, Options, Rules),
-    force_horizontal_ships_counts(1, HorizontalCounts, Ships, Shapes),
+    %force_horizontal_ships_counts(1, HorizontalCounts, Ships),
+    force_vertical_ships_counts(1, VerticalCounts, Ships),
     append(Positions, ShipsShapes, AllVars),
     labeling([], AllVars),
     write(ShipsShapes),
-    write(Positions).
+    write(Positions), nl,
+    fail.
 
 /*
     Count number of ships in a row
 */
-count_ships_in_row(_, [], _, 0).
-count_ships_in_row(Row, [object(_, CurrShapeID, [_, Y]) | RestShips], Shapes, Count) :-    
+count_ships_in_row(_, [], 0).
+count_ships_in_row(Row, [object(_, CurrShapeID, [_, Y]) | RestShips], Count) :-    
     
-    (CurrShapeID #= 1 #/\ Height #= 1) #\/
-    (CurrShapeID #= 2 #/\ Height #= 2) #\/
-    (CurrShapeID #= 3 #/\ Height #= 1) #\/
-    (CurrShapeID #= 4 #/\ Height #= 3) #\/
-    (CurrShapeID #= 5 #/\ Height #= 1),
+    (CurrShapeID #= 1 #/\ Width #= 1 #/\ Height #= 1) #\/
+    (CurrShapeID #= 2 #/\ Width #= 1 #/\ Height #= 2) #\/
+    (CurrShapeID #= 3 #/\ Width #= 2 #/\ Height #= 1) #\/
+    (CurrShapeID #= 4 #/\ Width #= 1 #/\ Height #= 3) #\/
+    (CurrShapeID #= 5 #/\ Width #= 3 #/\ Height #= 1),
 
     EndY #= Y + Height - 1,
 
     (Y #=< Row #/\ EndY #>= Row) #<=> Matched,
-    Count #= NextCount + Matched,
-    count_ships_in_row(Row, RestShips, Shapes, NextCount).
+    Count #= NextCount + Matched * Width,
+    count_ships_in_row(Row, RestShips, NextCount).
 
 /*
     Restrict number of ships per row to the given values
 */
-force_horizontal_ships_counts(I, Vals, _, _) :-
+force_horizontal_ships_counts(I, Vals, _) :-
     length(Vals, L),
     I > L.
-force_horizontal_ships_counts(Iter, HorizontalCounts, Ships, Shapes) :-
+force_horizontal_ships_counts(Iter, HorizontalCounts, Ships) :-
     length(HorizontalCounts, L),
     Iter =< L,
 
@@ -352,8 +364,46 @@ force_horizontal_ships_counts(Iter, HorizontalCounts, Ships, Shapes) :-
     nth1(Iter, HorizontalCounts, CurrTarget),
 
     % force value to be the target
-    count_ships_in_row(Iter, Ships, Shapes, CurrCount),
+    count_ships_in_row(Iter, Ships, CurrCount),
     CurrCount #= CurrTarget,    
     
     Next is Iter+1,
-    force_horizontal_ships_counts(Next, HorizontalCounts, Ships, Shapes).
+    force_horizontal_ships_counts(Next, HorizontalCounts, Ships).
+
+/*
+    Count number of ships in a column
+*/
+count_ships_in_col(_, [], 0).
+count_ships_in_col(Col, [object(_, CurrShapeID, [X, _]) | RestShips], Count) :-    
+    
+    (CurrShapeID #= 1 #/\ Width #= 1 #/\ Height #= 1) #\/
+    (CurrShapeID #= 2 #/\ Width #= 1 #/\ Height #= 2) #\/
+    (CurrShapeID #= 3 #/\ Width #= 2 #/\ Height #= 1) #\/
+    (CurrShapeID #= 4 #/\ Width #= 1 #/\ Height #= 3) #\/
+    (CurrShapeID #= 5 #/\ Width #= 3 #/\ Height #= 1),
+
+    EndX #= X + Width - 1,
+
+    (X #=< Col #/\ EndX #>= Col) #<=> Matched,
+    Count #= NextCount + Matched * Height,
+    count_ships_in_col(Col, RestShips, NextCount).
+
+/*
+    Restrict number of ships per row to the given values
+*/
+force_vertical_ships_counts(I, Vals, _) :-
+    length(Vals, L),
+    I > L.
+force_vertical_ships_counts(Iter, VerticalCounts, Ships) :-
+    length(VerticalCounts, L),
+    Iter =< L,
+
+    % get curr target value
+    nth1(Iter, VerticalCounts, CurrTarget),
+
+    % force value to be the target
+    count_ships_in_col(Iter, Ships, CurrCount),
+    CurrCount #= CurrTarget,    
+    
+    Next is Iter+1,
+    force_horizontal_ships_counts(Next, VerticalCounts, Ships).
