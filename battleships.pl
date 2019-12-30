@@ -110,6 +110,7 @@ choose_board(7) :-
 test :-
     HorizontalCounts = [4, 1, 3, 0, 3, 0, 4, 0, 2, 3],
     VerticalCounts = [1, 4, 1, 0, 4, 4, 1, 3, 1, 1],
+    WaterBlocks = [5/5, 1/7],
     solve_battleships(10/10, 10, [], HorizontalCounts, VerticalCounts).
 
 
@@ -128,6 +129,7 @@ test :-
     generalize - y
     variable number of ships - n
     optimizations - n
+    display result - n
 
 
         Since geost shapes objects from bottom to top, we decided to invert
@@ -162,7 +164,12 @@ solve_battleships(Rows/Columns, NShips, Board, HorizontalCounts, VerticalCounts)
         object(9, S9, [X9, Y9]),
         object(10, S10, [X10, Y10])
     ],
-    getShipsIDs(Ships, ShipsIDs),
+    WaterBlocks = [
+        object(11, 1, [5, 5]),
+        object(12, 1, [1, 7])
+    ],
+    getObjectsIDs(Ships, ShipsIDs),
+    getObjectsIDs(WaterBlocks, WaterBlocksIDs),
 
     % horizontal and vertical shapes for each ship size
     Shapes = [
@@ -210,25 +217,30 @@ solve_battleships(Rows/Columns, NShips, Board, HorizontalCounts, VerticalCounts)
         /* sum of origin value with shape offset and size in dimension D */
         (end(Obj, Shape, Dim) ---> Obj^x(Dim) + Shape^t(Dim) + Shape^l(Dim)),
 
-        (tooclose(Obj1, Obj2, Shape1, Shape2, Dim) --->
-            end(Obj1, Shape1, Dim) + 1 #> origin(Obj2, Shape2, Dim) #/\
-            end(Obj2, Shape2, Dim) + 1 #> origin(Obj1, Shape1, Dim)),
+        (tooclose(Obj1, Obj2, Shape1, Shape2, Dist, Dim) --->
+            end(Obj1, Shape1, Dim) + Dist #> origin(Obj2, Shape2, Dim) #/\
+            end(Obj2, Shape2, Dim) + Dist #> origin(Obj1, Shape1, Dim)),
 
-        % assure objects O1 and O2 are apart at least 1 unit
-        (apart(Obj1, Obj2) --->
+        % assure objects O1 and O2 are apart, by at least Dist units
+        (apart(Obj1, Obj2, Dist) --->
             forall(Shape1, sboxes([Obj1^sid]), % shape boxes of object O1, could be more than 1
                 forall(Shape2, sboxes([Obj2^sid]),% shape boxes of object O2
-                    #\ tooclose(Obj1, Obj2, Shape1, Shape2, 1) #\/ % check horizontally
-                    #\ tooclose(Obj1, Obj2, Shape1, Shape2, 2)))), % check vertically
+                    #\ tooclose(Obj1, Obj2, Shape1, Shape2, Dist, 1) #\/ % check horizontally
+                    #\ tooclose(Obj1, Obj2, Shape1, Shape2, Dist, 2)))), % check vertically
 
         % for all combinations of different objects
         (forall(Obj1, objects(ShipsIDs), % TODO these ids must come from outside and not be hardcoded
             forall(Obj2, objects(ShipsIDs),
                 % if different objects, must be apart 1 unit
-                (Obj2^oid #>= Obj1^oid) #\/ apart(Obj1, Obj2))))
+                (Obj2^oid #>= Obj1^oid) #\/ apart(Obj1, Obj2, 1)))),
+
+        (forall(Obj, objects(ShipsIDs),
+            forall(WaterBlock, objects(WaterBlocksIDs),
+                apart(Obj, WaterBlock, 0))))
     ],
     
-    geost(Ships, Shapes, Options, Rules),
+    append([Ships, WaterBlocks], AllObjects),
+    geost(AllObjects, Shapes, Options, Rules),
     force_horizontal_ships_counts(1, HorizontalCounts, Ships),
     force_vertical_ships_counts(1, VerticalCounts, Ships),
 
@@ -252,9 +264,9 @@ create_ships_shapes(Iter, NShips, [NewShape | RestShapes]) :-
 
 
 /* Collect the IDs of the objects in a list */
-getShipsIDs([], []).
-getShipsIDs([object(ID, _, _) | Rest], [ID | RestIDs]) :-
-    getShipsIDs(Rest, RestIDs).
+getObjectsIDs([], []).
+getObjectsIDs([object(ID, _, _) | Rest], [ID | RestIDs]) :-
+    getObjectsIDs(Rest, RestIDs).
 
 
 apply_shape_size_restrictions(ShapeID, Width, Height) :-
