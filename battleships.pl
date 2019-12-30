@@ -79,28 +79,27 @@ get_file_path(RelPath, AbsPath) :-
  */
 choose_board(1) :-
     get_file_path('files/board_1.txt', FileName),
-    read(FileName, Row/Column, Board, RowVal, ColVal),
-    display_board(Board, Row/Column, RowVal, ColVal),
+    get_battleships_board(FileName),
     battleships_menu, !.
 
 choose_board(2) :-
     get_file_path('files/board_2.txt', FileName),
-    read(FileName, Row/Column, Board, RowVal, ColVal),
+    get_battleships_board(FileName),
     battleships_menu, !.
 
 choose_board(3) :-
     get_file_path('files/board_3.txt', FileName),
-    read(FileName, Row/Column, Board, RowVal, ColVal),
+    get_battleships_board(FileName),
     battleships_menu, !.
 
 choose_board(4) :-
     get_file_path('files/board_4.txt', FileName),
-    read(FileName, Row/Column, Board, RowVal, ColVal),
+    get_battleships_board(FileName),
     battleships_menu, !.
 
 choose_board(5) :-
     get_file_path('files/board_5.txt', FileName),
-    read(FileName, Row/Column, Board, RowVal, ColVal),
+    get_battleships_board(FileName),
     battleships_menu, !.
 
 choose_board(6).
@@ -114,7 +113,15 @@ test :-
     WaterBlocks = [5/5, 1/7],
     solve_battleships(10/10, 10, [], HorizontalCounts, VerticalCounts).
 
-
+/**
+ * Get Battleships Board
+ * get_battleships_board(+FileName)
+ *
+ * FileName -> Absolute path to the file
+ */
+get_battleships_board(FileName) :-
+    read(FileName, Row/Column, Board, RowVal, ColVal),
+    display_board(Board, Row/Column, RowVal, ColVal).
 
 /*
     TODO
