@@ -80,6 +80,7 @@ get_file_path(RelPath, AbsPath) :-
 choose_board(1) :-
     get_file_path('files/board_1.txt', FileName),
     read(FileName, Row/Column, Board, RowVal, ColVal),
+    display_board(Board, Row/Column, RowVal, ColVal),
     battleships_menu, !.
 
 choose_board(2) :-
