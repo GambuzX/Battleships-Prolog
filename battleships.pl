@@ -110,8 +110,8 @@ choose_board(7) :-
 test :-
     HorizontalCounts = [4, 1, 3, 0, 3, 0, 4, 0, 2, 3],
     VerticalCounts = [1, 4, 1, 0, 4, 4, 1, 3, 1, 1],
-    WaterBlocks = [5/5, 1/7],
-    solve_battleships(10/10, 10, [], HorizontalCounts, VerticalCounts).
+    WaterBlocks = [5/5, 1/7], % get water blocks from board
+    solve_battleships(10/10, 10, WaterBlocks, HorizontalCounts, VerticalCounts).
 
 /**
  * Get Battleships Board
@@ -145,7 +145,7 @@ get_battleships_board(FileName) :-
     of the ships on the rows are inverted.
     The board should be imagined with increasing y and figures growing upwards.
 */
-solve_battleships(Rows/Columns, NShips, Board, HorizontalCounts, VerticalCounts) :-
+solve_battleships(Rows/Columns, NShips, WaterBlocksL, HorizontalCounts, VerticalCounts) :-
 
     ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
     X_Coords = [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10],
@@ -160,6 +160,7 @@ solve_battleships(Rows/Columns, NShips, Board, HorizontalCounts, VerticalCounts)
     domain([S8, S9], 4, 5),
     domain([S10], 6, 7),
 
+    StartObjID = 1,
     Ships = [
         object(1, S1, [X1, Y1]),
         object(2, S2, [X2, Y2]),
@@ -172,10 +173,10 @@ solve_battleships(Rows/Columns, NShips, Board, HorizontalCounts, VerticalCounts)
         object(9, S9, [X9, Y9]),
         object(10, S10, [X10, Y10])
     ],
-    WaterBlocks = [
-        object(11, 1, [5, 5]),
-        object(12, 1, [1, 7])
-    ],
+    LastAssignedID = 10,
+    createWaterBlocks(LastAssignedID, WaterBlocksL, WaterBlocks, LastAssignedID2),
+    
+    % collect IDs of objects to use in geost Rules
     getObjectsIDs(Ships, ShipsIDs),
     getObjectsIDs(WaterBlocks, WaterBlocksIDs),
 
@@ -269,6 +270,12 @@ create_ships_shapes(Iter, NShips, [NewShape | RestShapes]) :-
     Next is Iter+1,
     create_ships_shapes(Next, NShips, RestShapes).
 */
+
+createWaterBlocks(ID, [], [], ID).
+createWaterBlocks(LastAssignedID, [ X/Y | WaterBlocksL], [ object(CurrID, 1, [X, Y]) | WaterBlocks], LastAssignedID2) :-
+    CurrID is LastAssignedID + 1,
+    createWaterBlocks(CurrID, WaterBlocksL, WaterBlocks, LastAssignedID2).
+
 
 
 /* Collect the IDs of the objects in a list */
