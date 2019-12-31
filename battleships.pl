@@ -108,10 +108,11 @@ choose_board(7) :-
     battleships_menu, !.
 
 test :-
-    HorizontalCounts = [4, 1, 3, 0, 3, 0, 4, 0, 2, 3],
+    HorizontalCounts = [3, 2, 0, 4, 0, 3, 0, 3, 1, 4],
     VerticalCounts = [1, 4, 1, 0, 4, 4, 1, 3, 1, 1],
-    WaterBlocks = [5/5, 1/7], % get water blocks from board
-    solve_battleships(10/10, 10, WaterBlocks, HorizontalCounts, VerticalCounts).
+    WaterBlocks = [5/6, 1/4], % get water blocks from board
+    RequiredPositions = [5/4],
+    solve_battleships(10/10, 10, WaterBlocks, RequiredPositions, HorizontalCounts, VerticalCounts).
 
 /**
  * Get Battleships Board
@@ -145,7 +146,7 @@ get_battleships_board(FileName) :-
     of the ships on the rows are inverted.
     The board should be imagined with increasing y and figures growing upwards.
 */
-solve_battleships(Rows/Columns, NShips, WaterBlocksL, HorizontalCounts, VerticalCounts) :-
+solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCounts, VerticalCounts) :-
 
     ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
     X_Coords = [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10],
@@ -159,6 +160,22 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, HorizontalCounts, Vertical
     domain([S5, S6, S7], 2, 3),
     domain([S8, S9], 4, 5),
     domain([S10], 6, 7),
+
+    % TODO eliminate symmetries; verify required works
+    %X2 #>= X1,
+    %Y2 #>= Y1,
+    %X3 #>= X2,
+    %Y3 #>= Y2,
+    %X4 #>= X3,
+    %Y4 #>= Y3,
+
+    %X6 #>= X5,
+    %Y6 #>= Y5,
+    %X7 #>= X6,
+    %Y7 #>= Y6,
+    
+    %X9 #>= X8,
+    %Y9 #>= Y8,
 
     StartObjID = 1,
     Ships = [
@@ -175,7 +192,7 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, HorizontalCounts, Vertical
     ],
     LastAssignedID = 10,
     createWaterBlocks(LastAssignedID, WaterBlocksL, WaterBlocks, LastAssignedID2),
-    
+
     % collect IDs of objects to use in geost Rules
     getObjectsIDs(Ships, ShipsIDs),
     getObjectsIDs(WaterBlocks, WaterBlocksIDs),
@@ -216,8 +233,6 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, HorizontalCounts, Vertical
             - o.oid : unique object id (integer)
             - o.sid : shape id (integer if fixed shape, or domain variable for polymorphic objects)
             - o.x[d] : origin (1 <= d <= k)
-        
-        card(quantified variable, list of terms, lower bound, upper bound, fol)
     */
     Rules = [ 
         /* sum of origin value with shape offset in dimension D*/
@@ -237,6 +252,16 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, HorizontalCounts, Vertical
                     #\ tooclose(Obj1, Obj2, Shape1, Shape2, Dist, 1) #\/ % check horizontally
                     #\ tooclose(Obj1, Obj2, Shape1, Shape2, Dist, 2)))), % check vertically
 
+        (dim_intersects(Obj, Shape, Coord, Dim) --->
+            origin(Obj, Shape, Dim) #=< Coord #/\ Coord #=< end(Obj, Shape, Dim)
+        ),
+
+        % checks if Object intersects given position
+        (intersect(Obj, X/Y) --->
+            forall(Shape, sboxes([Obj^sid]),
+                dim_intersects(Obj, Shape, X, 0) #/\
+                dim_intersects(Obj, Shape, Y, 1))),
+
         % for all combinations of different objects
         (forall(Obj1, objects(ShipsIDs), % TODO these ids must come from outside and not be hardcoded
             forall(Obj2, objects(ShipsIDs),
@@ -245,7 +270,11 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, HorizontalCounts, Vertical
 
         (forall(Obj, objects(ShipsIDs),
             forall(WaterBlock, objects(WaterBlocksIDs),
-                apart(Obj, WaterBlock, 0))))
+                % must not intersect. apart by 0 units means touching each other but not intersecting
+                apart(Obj, WaterBlock, 0)))),
+
+        (forall(Req, RequiredPositions, 
+            exists(Obj, objects(ShipsIDs), intersects(Obj, Req))))
     ],
     
     append([Ships, WaterBlocks], AllObjects),
@@ -257,7 +286,8 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, HorizontalCounts, Vertical
     labeling([ffc, median], AllVars),
     write(ShipsShapes),
     write(X_Coords),
-    write(Y_Coords).
+    write(Y_Coords),
+    nl, fail.
 
 /*
 create_ships_shapes(I, N, []]) :-
