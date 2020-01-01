@@ -42,8 +42,10 @@ display_ship :-
  * VerticalCounts -> The number of ship pieces in each column
  */
 display_board(Board, Rows/Columns, HorCount, VertCount) :-
-    display_rows(Board, Rows/Columns, HorCount, 1), 
-    display_column_values(VertCount, 1).
+    reverse(HorCount, RevHorCount),
+    display_rows(Board, Rows/Columns, RevHorCount, 1), 
+    reverse(VertCount, RevVertCount),
+    display_column_values(RevVertCount, 1), !.
 
 /**
  * Display Rows

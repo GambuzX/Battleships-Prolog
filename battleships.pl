@@ -104,7 +104,7 @@ choose_board(5) :-
 
 choose_board(6).
 
-choose_board(7) :-
+choose_board(_) :-
     battleships_menu, !.
 
 test :-
@@ -122,7 +122,75 @@ test :-
  */
 get_battleships_board(FileName) :-
     read(FileName, Row/Column, Board, RowVal, ColVal),
-    display_board(Board, Row/Column, RowVal, ColVal).
+    display_board(Board, Row/Column, RowVal, ColVal),
+    get_water_blocks(Board, WaterBlocks),
+    get_ship_blocks(Board, RequiredBlocks),
+    solve_battleships(Row/Column, _, WaterBlocks, RequiredBlocks, RowVal, ColVal).
+   
+
+/**
+ * Get Water Blocks
+ * get_water_blocks(+Board, -WaterBlocks)
+ * Gets the water blocks
+ * 
+ * Board -> Puzzle board
+ * WaterBlocks -> List with the positions of the water blocks 
+ */
+get_water_blocks(Board, WaterBlocks) :-
+    get_blocks(Board, w, 1, WaterBlocks), !.
+
+/**
+ * Get Ship Blocks
+ * get_ship_blocks(+Board, -ShipBlocks)
+ * Gets the ship blocks
+ * 
+ * Board -> Puzzle board
+ * ShipBlocks -> List with the positions of the ship blocks 
+ */
+get_ship_blocks(Board, ShipBlocks) :-
+    get_blocks(Board, s, 1, ShipBlocks), !.
+
+/**
+ * Get Blocks
+ * get_blocks(+Board, +Character, +RowNumber, -Blocks)
+ * Gets the blocks with the specified character
+ * 
+ * Board -> Puzzle board
+ * Character -> Character to search
+ * RowNumber -> Current row number [1, MaxRows]
+ * Blocks -> List with the positions of the blocks 
+ */
+get_blocks([], _, _, []) :- !. 
+
+get_blocks([FirstRow|OtherRows], Char, Row, Blocks) :-
+    NextRow is Row + 1,
+    get_blocks(OtherRows, Char, NextRow, NextBlocks),
+    get_row_blocks(FirstRow, Char, Row, 1, RowBlocks),
+    append(RowBlocks, NextBlocks, Blocks), !.
+
+/**
+ * Get Row Blocks
+ * get_row_blocks(+Row, +Character, +RowNumber, +ColumnNumber, -Blocks)
+ * Gets the blocks in a row with the specified character
+ * 
+ * Row -> Puzzle board row
+ * Character -> Character to search
+ * RowNumber -> Current row number [1, MaxRows]
+ * ColumnNumber -> Current column number [1, MaxColumns]
+ * Blocks -> List with the positions of the blocks 
+ */
+get_row_blocks([], _, _, _, []) :- !.
+
+get_row_blocks([Pos|OtherPos], Char, Row, Column, Blocks) :-
+    Pos = Char,
+    NextColumn is Column + 1,
+    get_row_blocks(OtherPos, Char, Row, NextColumn, NextBlocks),
+    append([Row/Column], NextBlocks, Blocks),!.
+
+get_row_blocks([Pos|OtherPos], Char, Row, Column, Blocks) :-
+    Pos \= Char,
+    NextColumn is Column + 1,
+    get_row_blocks(OtherPos, Char, Row, NextColumn, Blocks), !.
 
 /*
     TODO
