@@ -161,22 +161,6 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
     domain([S8, S9], 4, 5),
     domain([S10], 6, 7),
 
-    % TODO eliminate symmetries; verify required works
-    %X2 #>= X1,
-    %Y2 #>= Y1,
-    %X3 #>= X2,
-    %Y3 #>= Y2,
-    %X4 #>= X3,
-    %Y4 #>= Y3,
-
-    %X6 #>= X5,
-    %Y6 #>= Y5,
-    %X7 #>= X6,
-    %Y7 #>= Y6,
-    
-    %X9 #>= X8,
-    %Y9 #>= Y8,
-
     StartObjID = 1,
     Ships = [
         object(1, S1, [X1, Y1]),
@@ -215,7 +199,13 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
             limit all coordinates of the objects to be in range [1,10]
             geost only guarantees that the object origin is inside the specified domain
         */
-        bounding_box([1, 1], [Bounding_box_x, Bounding_box_y])
+        bounding_box([1, 1], [Bounding_box_x, Bounding_box_y]),
+
+        
+        % eliminate symmetries in answers
+        lex([1,2,3,4]),
+        lex([5,6,7]),
+        lex([8,9])
     ],
 
     /*
@@ -312,6 +302,11 @@ createWaterBlocks(LastAssignedID, [ X/Y | WaterBlocksL], [ object(CurrID, 1, [X,
 getObjectsIDs([], []).
 getObjectsIDs([object(ID, _, _) | Rest], [ID | RestIDs]) :-
     getObjectsIDs(Rest, RestIDs).
+
+% second point is farther from origin, or at same distance but with higher X
+% replaced by 'lex' in geost Options
+eliminate_coords_symmetry(X1, Y1, X2, Y2) :-
+    (X1 + Y1 #< X2 + Y2) #\/ (X1 + Y1 #= X2 + Y2 #/\ X1 #=< X2).
 
 
 apply_shape_size_restrictions(ShapeID, Width, Height) :-
