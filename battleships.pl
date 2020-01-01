@@ -52,8 +52,49 @@ choose_menu_option(1) :-
             error_msg('Invalid option')
         ).
 
-choose_menu_option(2).
+choose_menu_option(2) :-
+    generate_board_option.
+
 choose_menu_option(3).
+
+/**
+ * Generate Board Option
+ * generate_board_option
+ * Generate Board Option
+ */
+ generate_board_option :-
+    write('GENERATE BOARD'), nl, nl,
+    write('Insert the name of the output file (please end the name with a \'.\'): '),
+    read(FileName), !,
+    change_file_name(FileName, FileRelPath),
+    get_file_path(FileRelPath, FilePath), !,
+    read_board_size(NumRows, NumColumns),
+    tell(FilePath),
+    generate_board(NumRows, NumColumns),
+    told, !.
+
+generate_board_option.
+
+/**
+ * Generate Board
+ * generate_board(+NumRows, +NumColumns)
+ * Generate Board
+ *
+ * NumRows -> Number of board rows
+ * NumColumns -> Number of board columns
+ */
+generate_board(NumRows, NumColumns).
+
+/**
+ * Add files directory and .txt extension
+ * change_file_name(Name, RelPath)
+ *
+ * Name -> Inserted name
+ * NewName -> Name with .txt extension
+ */
+change_file_name(Name, RelPath) :-
+    atom_concat(Name, '.txt', NewName),
+    atom_concat('files/', NewName, RelPath).
 
 /**
  * Get File Path
@@ -66,6 +107,7 @@ choose_menu_option(3).
 get_file_path(RelPath, AbsPath) :-
     path(P),
     atom_concat(P, RelPath, AbsPath), !.
+
 
 /**
  * Choose Board

@@ -47,3 +47,23 @@ read_option(Max, Option) :-
     get_code(_), %Get \n character
     Option >= 1,
     Option =< Max.
+
+/**
+ * Read Board Size
+ * read_board_size(-NumRows, -NumColumns)
+ * Reads the board size
+ *
+ * NumRows -> Number of board rows
+ * NumColumns -> Number of board columns
+ */
+read_board_size(NumRows, NumColumns) :-
+    repeat,
+        (
+            write('Insert the board size in the format \'NumberRows/NumberColumns\'.'), nl,
+            write('(Both number must be greater than 6 and the tuple should end with a \'.\''), nl,
+            read(NumRows/NumColumns), 
+            NumRows >= 7,
+            NumColumns >= 7, !;
+
+            error_msg('Invalid option!')
+        ).
