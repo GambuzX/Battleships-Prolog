@@ -198,15 +198,15 @@ get_row_blocks([Pos|OtherPos], Char, Row, Column, Blocks) :-
     assure count of each shape - y
     ships not touching each other - y
     numbers in lines and cols - y
-    water blocks - n
-    get answer from result of labeling - n
-    match already existing ships - n
+    water blocks - y
+    match already existing ships - y
+    generalize - y
+    get answer from result of labeling - y
+    display result - n
+    optimizations - n +-
     generate boards - n
     read from files - n
-    generalize - y
     variable number of ships - n
-    optimizations - n
-    display result - n
 
 
         Since geost shapes objects from bottom to top, we decided to invert
@@ -342,10 +342,9 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
 
     append([ShipsShapes, X_Coords, Y_Coords], AllVars),
     labeling([ffc, median], AllVars),
-    write(ShipsShapes),
-    write(X_Coords),
-    write(Y_Coords),
-    nl, fail.
+
+    create_board(Rows/Columns, Ships, Shapes, WaterBlocksL, FinalBoard),
+    display_board(FinalBoard, Rows/Columns, HorizontalCounts, VerticalCounts).
 
 /*
 create_ships_shapes(I, N, []]) :-
@@ -449,3 +448,72 @@ force_vertical_ships_counts(Iter, VerticalCounts, Ships) :-
     
     Next is Iter+1,
     force_vertical_ships_counts(Next, VerticalCounts, Ships).
+
+create_board(Rows/Cols, Ships, Shapes, WaterBlocks, Board) :-
+    length(Board, Rows),
+    assign_rows_length(Board, Cols),
+    draw_ships(Board, Ships, Shapes),
+    draw_water_blocks(Board, WaterBlocks),
+    fill_missing(Board).
+    
+assign_rows_length([], _) :- !.
+assign_rows_length([Row | Rest], Cols) :-
+    length(Row, Cols),
+    assign_rows_length(Rest, Cols).
+
+get_shape(ShapeID, [Shape | _], Shape) :-
+    sbox(CurrShapeID, _, _) = Shape,
+    ShapeID = CurrShapeID.
+
+get_shape(ShapeID, [Shape | Rest], TargetShape) :-
+    sbox(CurrShapeID, _, _) = Shape,
+    ShapeID \= CurrShapeID,
+    get_shape(ShapeID, Rest, TargetShape).
+
+% draw ships in the board with 's'
+draw_ships(_, [], _) :- !.
+draw_ships(Board, [object(_, ShapeID, [X, Y]) | Rest], Shapes) :-
+    get_shape(ShapeID, Shapes, Shape),
+    sbox(_, _, [Sx, Sy]) = Shape,
+    (
+        Sx = 1, draw_ship_vertical(Board, X/Y, Sy);
+        Sy = 1, draw_ship_horizontal(Board, X/Y, Sx)
+    ), !,
+    draw_ships(Board, Rest, Shapes).
+
+draw_ship_vertical(_, _, 0) :- !.
+draw_ship_vertical(Board, X/Y, Height) :-
+    nth1(Y, Board, Row),
+    nth1(X, Row, s),
+    NextY is Y+1,
+    NextHeight is Height-1,
+    draw_ship_vertical(Board, X/NextY, NextHeight).
+
+draw_ship_horizontal(_, _, 0) :- !.
+draw_ship_horizontal(Board, X/Y, Width) :-
+    nth1(Y, Board, Row),
+    nth1(X, Row, s),
+    NextX is X+1,
+    NextWidth is Width-1,
+    draw_ship_horizontal(Board, NextX/Y, NextWidth).
+
+% draw water blocks in the board, given by coords X/Y, as 'w'
+draw_water_blocks(_, []) :- !.
+draw_water_blocks(Board, [X/Y | Rest]) :-
+    nth1(Y, Board, Row),
+    nth1(X, Row, w),
+    draw_water_blocks(Board, Rest).
+
+% assign remaining variables in board to 'e', empty
+fill_missing([]) :- !.
+fill_missing([Row | Rest]) :-
+    fill_missing_row(Row),
+    fill_missing(Rest).
+
+fill_missing_row([]) :- !.
+fill_missing_row([Ele | Rest]) :-
+    (
+        nonvar(Ele);
+        Ele = e
+    ), !,
+    fill_missing_row(Rest).

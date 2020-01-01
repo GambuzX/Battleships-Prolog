@@ -43,9 +43,8 @@ display_ship :-
  */
 display_board(Board, Rows/Columns, HorCount, VertCount) :-
     reverse(HorCount, RevHorCount),
-    display_rows(Board, Rows/Columns, RevHorCount, 1), 
-    reverse(VertCount, RevVertCount),
-    display_column_values(RevVertCount, 1), !.
+    display_rows(Board, Rows/Columns, RevHorCount, 1),  
+    display_column_values(VertCount, 1), !.
 
 /**
  * Display Rows
