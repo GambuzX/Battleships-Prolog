@@ -66,4 +66,4 @@ read_board_size(NumRows, NumColumns) :-
             NumColumns >= 7, !;
 
             error_msg('Invalid option!')
-        ).
+        ).    

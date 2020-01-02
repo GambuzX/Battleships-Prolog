@@ -1,5 +1,6 @@
 :- use_module(library(clpfd)).
 :- use_module(library(lists)).
+:- use_module(library(random)).
 
 :- include('display.pl').
 :- include('input.pl').
@@ -53,7 +54,9 @@ choose_menu_option(1) :-
         ).
 
 choose_menu_option(2) :-
-    generate_board_option.
+    generate_board_option,
+    battleships_menu, !.
+        
 
 choose_menu_option(3).
 
@@ -69,20 +72,217 @@ choose_menu_option(3).
     change_file_name(FileName, FileRelPath),
     get_file_path(FileRelPath, FilePath), !,
     read_board_size(NumRows, NumColumns),
-    generate_board(NumRows, NumColumns, Board, RowValues, ColumnValues),
-    write(FilePath, NumRows/NumColumns, Board, RowValues, ColumnValues), !.
+    generate_board(NumRows, NumColumns, Board),
+    length(RowValues, NumRows),
+    get_row_values(Board, RowVal),
+    reverse(RowVal, RowValues),
+    length(ColumnValues, NumColumns),
+    get_column_values(Board, 1, ColumnValues), !,
+    create_new_board(Board, NumRows, NumColumns, NewBoard),
+    display_board(NewBoard, NumRows/NumColumns, RowValues, ColumnValues),
+    write(FilePath, NumRows/NumColumns, NewBoard, RowValues, ColumnValues), !.
 
 generate_board_option.
 
 /**
+ * Create New Board
+ * create_new_board(+Board, +NumRows, +NumColumns, -NewBoard)
+ * Creates a new board
+ *
+ * Board -> The generated board
+ * NumRows -> Number of rows
+ * NumColumns -> Number of columns
+ * NewBoard -> New generated board
+ */
+create_new_board(Board, NumRows, NumColumns, NewBoard) :-
+    get_empty_blocks(Board, EmptyBlocks),
+    random_select(Water1, EmptyBlocks, OtherBlocks),
+    random_member(Water2, OtherBlocks),
+    get_ship_blocks(Board, ShipBlocks),
+    random_member(Ship, ShipBlocks),
+    length(NewBoard, NumRows),
+    assign_rows_length(NewBoard, NumColumns),
+    draw_ship_blocks(NewBoard, [Ship]),
+    draw_water_blocks(NewBoard, [Water1, Water2]),
+    fill_missing(NewBoard), !.
+
+/** 
+ * Get Row Values
+ * get_row_values(+Board, ?RowValues)
+ * Gets a list with the row values
+ * 
+ * Board -> The puzzle board
+ * RowValues -> List with the sum of the ship parts in each row  
+ */
+get_row_values([], []) :- !.
+
+get_row_values([Row|OtherRows], [RowValues|OtherRowsValues]) :-
+    get_row_values(OtherRows, OtherRowsValues),
+    count_row_parts(Row, RowValues), !.
+
+/** 
+ * Count Row Parts
+ * count_row_parts(+Row, -RowValue)
+ * Gets the value of a row
+ * 
+ * Row -> A puzzle row
+ * RowValue -> Number of ship parts in the row  
+ */
+count_row_parts([], 0) :- !.
+
+count_row_parts([Elem|Row], Value) :-
+    Elem = s,
+    count_row_parts(Row, NewValue),
+    Value is NewValue + 1, !.
+
+count_row_parts([Elem|Row], Value) :-
+    Elem \= s,
+    count_row_parts(Row, Value), !.
+
+/** 
+ * Get Column Values
+ * get_column_values(+Board, +ColNumber, ?ColumnValues)
+ * Gets a list with the column values
+ * 
+ * Board -> The puzzle board
+ * ColNumber -> Current column nuber
+ * ColumnValues -> List with the sum of the ship parts in each column  
+ */
+get_column_values(_, _, []) :- !.
+
+get_column_values(Board, ColNumber, [ColVal|OtherColValues]) :-
+    NextColNumber is ColNumber + 1,
+    get_column_values(Board, NextColNumber, OtherColValues),
+    count_column_parts(Board, ColNumber, ColVal), !.
+
+/** 
+ * Count Column Parts
+ * count_column_parts(+Board, +ColNumber, -ColumnValue)
+ * Gets the value of a column
+ * 
+ * Board -> The puzzle board
+ * ColNumber -> Number of the current column
+ * ColumnValue -> Number of ship parts in the column  
+ */
+count_column_parts([], _, 0) :- !.
+
+count_column_parts([Row|OtherRows], ColNum, ColVal) :-
+    nth1(ColNum, Row, s),
+    count_column_parts(OtherRows, ColNum, NextColVal),
+    ColVal is NextColVal + 1, !.
+
+count_column_parts([Row|OtherRows], ColNum, ColVal) :-
+    count_column_parts(OtherRows, ColNum, ColVal), !.
+
+/**
  * Generate Board
- * generate_board(+NumRows, +NumColumns)
+ * generate_board(+Rows, +Columns, -RowValues, -ColumnValues)
  * Generate Board
  *
- * NumRows -> Number of board rows
- * NumColumns -> Number of board columns
+ * Rows -> Number of board rows
+ * Columns -> Number of board columns
+ * RowValues -> List with the sum of the ship parts in each row 
+ * ColumnValues -> List with the sum of the ship parts in each column
  */
-generate_board(NumRows, NumColumns).
+generate_board(Rows, Columns, Board) :-
+    ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
+    X_Coords = [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10],
+    Y_Coords = [Y1, Y2, Y3, Y4, Y5, Y6, Y7, Y8, Y9, Y10],
+
+    % 1 indexed!!!!
+    domain(X_Coords, 1, Columns),
+    domain(Y_Coords, 1, Rows),
+
+    domain([S1, S2, S3, S4], 1, 1),
+    domain([S5, S6, S7], 2, 3),
+    domain([S8, S9], 4, 5),
+    domain([S10], 6, 7),
+
+    StartObjID = 1,
+    Ships = [
+        object(1, S1, [X1, Y1]),
+        object(2, S2, [X2, Y2]),
+        object(3, S3, [X3, Y3]),
+        object(4, S4, [X4, Y4]),
+        object(5, S5, [X5, Y5]),
+        object(6, S6, [X6, Y6]),
+        object(7, S7, [X7, Y7]),
+        object(8, S8, [X8, Y8]),
+        object(9, S9, [X9, Y9]),
+        object(10, S10, [X10, Y10])
+    ],
+    LastAssignedID = 10,
+
+    % collect IDs of objects to use in geost Rules
+    getObjectsIDs(Ships, ShipsIDs),
+
+    % horizontal and vertical shapes for each ship size
+    Shapes = [
+        sbox(1, [0,0], [1, 1]),
+        sbox(2, [0,0], [1, 2]),
+        sbox(3, [0,0], [2, 1]),
+        sbox(4, [0,0], [1, 3]),
+        sbox(5, [0,0], [3, 1]),
+        sbox(6, [0,0], [1, 4]),
+        sbox(7, [0,0], [4, 1])
+    ],
+
+    Bounding_box_x is Columns+1,
+    Bounding_box_y is Rows+1,
+    Options = [
+        /*
+            limit all coordinates of the objects to be in range [1,10]
+            geost only guarantees that the object origin is inside the specified domain
+        */
+        bounding_box([1, 1], [Bounding_box_x, Bounding_box_y]),
+
+        
+        % eliminate symmetries in answers
+        lex([1,2,3,4]),
+        lex([5,6,7]),
+        lex([8,9])
+    ],
+
+    Rules = [ 
+        /* sum of origin value with shape offset in dimension D*/
+        (origin(Obj, Shape, Dim) ---> Obj^x(Dim) + Shape^t(Dim)),
+
+        /* sum of origin value with shape offset and size in dimension D */
+        (end(Obj, Shape, Dim) ---> Obj^x(Dim) + Shape^t(Dim) + Shape^l(Dim)),
+
+        (tooclose(Obj1, Obj2, Shape1, Shape2, Dist, Dim) --->
+            end(Obj1, Shape1, Dim) + Dist #> origin(Obj2, Shape2, Dim) #/\
+            end(Obj2, Shape2, Dim) + Dist #> origin(Obj1, Shape1, Dim)),
+
+        % assure objects O1 and O2 are apart, by at least Dist units
+        (apart(Obj1, Obj2, Dist) --->
+            forall(Shape1, sboxes([Obj1^sid]), % shape boxes of object O1, could be more than 1
+                forall(Shape2, sboxes([Obj2^sid]),% shape boxes of object O2
+                    #\ tooclose(Obj1, Obj2, Shape1, Shape2, Dist, 1) #\/ % check horizontally
+                    #\ tooclose(Obj1, Obj2, Shape1, Shape2, Dist, 2)))), % check vertically
+
+        (dim_intersects(Obj, Shape, Coord, Dim) --->
+            origin(Obj, Shape, Dim) #=< Coord #/\ Coord #=< end(Obj, Shape, Dim)
+        ),
+
+        % checks if Object intersects given position
+        (intersect(Obj, X/Y) --->
+            forall(Shape, sboxes([Obj^sid]),
+                dim_intersects(Obj, Shape, X, 0) #/\
+                dim_intersects(Obj, Shape, Y, 1))),
+
+        % for all combinations of different objects
+        (forall(Obj1, objects(ShipsIDs), % TODO these ids must come from outside and not be hardcoded
+            forall(Obj2, objects(ShipsIDs),
+                % if different objects, must be apart 1 unit
+                (Obj2^oid #>= Obj1^oid) #\/ apart(Obj1, Obj2, 1))))
+    ],
+    
+    geost(Ships, Shapes, Options, Rules),
+
+    append([ShipsShapes, X_Coords, Y_Coords], AllVars),
+    labeling([ffc, median], AllVars), 
+    create_board(Rows/Columns, Ships, Shapes, [], Board).
 
 /**
  * Add files directory and .txt extension
@@ -190,6 +390,17 @@ get_water_blocks(Board, WaterBlocks) :-
  */
 get_ship_blocks(Board, ShipBlocks) :-
     get_blocks(Board, s, 1, ShipBlocks), !.
+
+/**
+ * Get Empty Blocks
+ * get_empty_blocks(+Board, -EmptyBlocks)
+ * Gets the empty blocks
+ * 
+ * Board -> Puzzle board
+ * Empty -> List with the positions of the empty blocks 
+ */
+get_empty_blocks(Board, EmptyBlocks) :-
+    get_blocks(Board, e, 1, EmptyBlocks), !.
 
 /**
  * Get Blocks
@@ -383,9 +594,21 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
 
     append([ShipsShapes, X_Coords, Y_Coords], AllVars),
     labeling([ffc, median], AllVars),
-
     create_board(Rows/Columns, Ships, Shapes, WaterBlocksL, FinalBoard),
-    display_board(FinalBoard, Rows/Columns, HorizontalCounts, VerticalCounts).
+    display_board(FinalBoard, Rows/Columns, HorizontalCounts, VerticalCounts), 
+    /*(
+        write('Get other solution? (Y/N) '),
+        get_char(C), !,
+        (
+            C \= 'Y',
+            C \= 'y',
+            !;
+            fail
+        );
+
+        fail
+    ).*/
+    fail.
 
 /*
 create_ships_shapes(I, N, []]) :-
@@ -545,6 +768,13 @@ draw_water_blocks(Board, [X/Y | Rest]) :-
     nth1(Y, Board, Row),
     nth1(X, Row, w),
     draw_water_blocks(Board, Rest).
+
+% draw ship blocks in the board, given by coords X/Y, as 's'
+draw_ship_blocks(_, []) :- !.
+draw_ship_blocks(Board, [X/Y | Rest]) :-
+    nth1(Y, Board, Row),
+    nth1(X, Row, s),
+    draw_ship_blocks(Board, Rest).
 
 % assign remaining variables in board to 'e', empty
 fill_missing([]) :- !.
