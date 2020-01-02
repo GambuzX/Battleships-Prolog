@@ -69,9 +69,8 @@ choose_menu_option(3).
     change_file_name(FileName, FileRelPath),
     get_file_path(FileRelPath, FilePath), !,
     read_board_size(NumRows, NumColumns),
-    tell(FilePath),
-    generate_board(NumRows, NumColumns),
-    told, !.
+    generate_board(NumRows, NumColumns, Board, RowValues, ColumnValues),
+    write(FilePath, NumRows/NumColumns, Board, RowValues, ColumnValues), !.
 
 generate_board_option.
 
@@ -227,7 +226,7 @@ get_row_blocks([Pos|OtherPos], Char, Row, Column, Blocks) :-
     Pos = Char,
     NextColumn is Column + 1,
     get_row_blocks(OtherPos, Char, Row, NextColumn, NextBlocks),
-    append([Row/Column], NextBlocks, Blocks),!.
+    append([Column/Row], NextBlocks, Blocks),!.
 
 get_row_blocks([Pos|OtherPos], Char, Row, Column, Blocks) :-
     Pos \= Char,
@@ -491,12 +490,13 @@ force_vertical_ships_counts(Iter, VerticalCounts, Ships) :-
     Next is Iter+1,
     force_vertical_ships_counts(Next, VerticalCounts, Ships).
 
-create_board(Rows/Cols, Ships, Shapes, WaterBlocks, Board) :-
+create_board(Rows/Cols, Ships, Shapes, WaterBlocks, NewBoard) :-
     length(Board, Rows),
     assign_rows_length(Board, Cols),
     draw_ships(Board, Ships, Shapes),
-    draw_water_blocks(Board, WaterBlocks),
-    fill_missing(Board).
+    reverse(Board, NewBoard),
+    draw_water_blocks(NewBoard, WaterBlocks),
+    fill_missing(NewBoard).
     
 assign_rows_length([], _) :- !.
 assign_rows_length([Row | Rest], Cols) :-
