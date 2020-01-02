@@ -102,7 +102,7 @@ create_new_board(Board, NumRows, NumColumns, NewBoard) :-
     random_member(Ship, ShipBlocks),
     length(NewBoard, NumRows),
     assign_rows_length(NewBoard, NumColumns),
-    draw_ship_blocks(NewBoard, [Ship]),
+    draw_required_ship_blocks(NewBoard, [Ship]),
     draw_water_blocks(NewBoard, [Water1, Water2]),
     fill_missing(NewBoard), !.
 
@@ -176,15 +176,15 @@ count_column_parts([Row|OtherRows], ColNum, ColVal) :-
 
 /**
  * Generate Board
- * generate_board(+Rows, +Columns, -RowValues, -ColumnValues)
- * Generate Board
+ * generate_board(+Rows, +Columns, -Board)
+ * Generates a board with given dimensions, placing the 10 ship fleet.
  *
  * Rows -> Number of board rows
  * Columns -> Number of board columns
- * RowValues -> List with the sum of the ship parts in each row 
- * ColumnValues -> List with the sum of the ship parts in each column
+ * Board -> Resulting board
  */
 generate_board(Rows, Columns, Board) :-
+    % domain variables
     ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
     X_Coords = [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10],
     Y_Coords = [Y1, Y2, Y3, Y4, Y5, Y6, Y7, Y8, Y9, Y10],
@@ -198,6 +198,7 @@ generate_board(Rows, Columns, Board) :-
     domain([S8, S9], 4, 5),
     domain([S10], 6, 7),
 
+    % representation of the ships for geost
     Ships = [
         object(1, S1, [X1, Y1]),
         object(2, S2, [X2, Y2]),
@@ -210,7 +211,6 @@ generate_board(Rows, Columns, Board) :-
         object(9, S9, [X9, Y9]),
         object(10, S10, [X10, Y10])
     ],
-    LastAssignedID = 10,
 
     % collect IDs of objects to use in geost Rules
     getObjectsIDs(Ships, ShipsIDs),
@@ -230,11 +230,10 @@ generate_board(Rows, Columns, Board) :-
     Bounding_box_y is Rows+1,
     Options = [
         /*
-            limit all coordinates of the objects to be in range [1,10]
-            geost only guarantees that the object origin is inside the specified domain
+            limit all positions occupied by the objects to be inside of the board
+            by default, geost only guarantees that the object origin is inside the specified domain
         */
         bounding_box([1, 1], [Bounding_box_x, Bounding_box_y]),
-
         
         % eliminate symmetries in answers
         lex([1,2,3,4]),
@@ -347,13 +346,6 @@ choose_board(6).
 choose_board(_) :-
     battleships_menu, !.
 
-test :-
-    HorizontalCounts = [3, 2, 0, 4, 0, 3, 0, 3, 1, 4],
-    VerticalCounts = [1, 4, 1, 0, 4, 4, 1, 3, 1, 1],
-    WaterBlocks = [5/6, 1/4], % get water blocks from board
-    RequiredPositions = [5/4],
-    solve_battleships(10/10, 10, WaterBlocks, RequiredPositions, HorizontalCounts, VerticalCounts).
-
 /**
  * Get Battleships Board
  * get_battleships_board(+FileName)
@@ -443,30 +435,23 @@ get_row_blocks([Pos|OtherPos], Char, Row, Column, Blocks) :-
     NextColumn is Column + 1,
     get_row_blocks(OtherPos, Char, Row, NextColumn, Blocks), !.
 
-/*
-    TODO
 
-    assure count of each shape - y
-    ships not touching each other - y
-    numbers in lines and cols - y
-    water blocks - y
-    match already existing ships - y
-    generalize - y
-    get answer from result of labeling - y
-    display result - n
-    optimizations - n +-
-    generate boards - n
-    read from files - n
-    variable number of ships - n
-
-
-        Since geost shapes objects from bottom to top, we decided to invert
-    the board so that the y increases upwards. As such, the values for the sum
-    of the ships on the rows are inverted.
-    The board should be imagined with increasing y and figures growing upwards.
-*/
+/**
+ * Solve battleships
+ * solve_battleships(+Dimensions, +NShips, +WaterBlocksList, +RequiredPositionsList, +HorizontalCounts, +VerticalCounts)
+ * Solves a battleships problem, given the provided input values.
+ * Finds the position of all the ships in the board.
+ *
+ * Dimensions -> Size of the board, in format Rows/Columns
+ * NShips -> Number of ships of each dimension
+ * WaterBlocksList -> List of positions X/Y of Water blocks in the board
+ * RequiredPositionsList -> List of positions X/Y that must contain a ship
+ * HorizontalCounts -> List with the number of ship segments that must appear in each row
+ * VerticalCounts -> List with the number of ship segments that must appear in each col
+ */
 solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCounts, VerticalCounts) :-
     
+    % Domain variables
     ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
     X_Coords = [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10],
     Y_Coords = [Y1, Y2, Y3, Y4, Y5, Y6, Y7, Y8, Y9, Y10],
@@ -480,6 +465,7 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
     domain([S8, S9], 4, 5),
     domain([S10], 6, 7),
 
+    % ship objects to be used in geost
     Ships = [
         object(1, S1, [X1, Y1]),
         object(2, S2, [X2, Y2]),
@@ -514,12 +500,11 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
     Bounding_box_y is Rows+1,
     Options = [
         /*
-            limit all coordinates of the objects to be in range [1,10]
-            geost only guarantees that the object origin is inside the specified domain
+            limit all positions occupied by the objects to be inside the board
+            by default, geost only guarantees that the object origin is inside the specified domain
         */
         bounding_box([1, 1], [Bounding_box_x, Bounding_box_y]),
 
-        
         % eliminate symmetries in answers
         lex([1,2,3,4]),
         lex([5,6,7]),
@@ -587,6 +572,8 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
     
     append([Ships, WaterBlocks], AllObjects),
     geost(AllObjects, Shapes, Options, Rules),
+
+    % apply restrictions of ships' segments count in rows and columns
     force_horizontal_ships_counts(1, HorizontalCounts, Ships),
     force_vertical_ships_counts(1, VerticalCounts, Ships),
 
@@ -608,36 +595,57 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
     ).*/
     fail.
 
-/*
-create_ships_shapes(I, N, []]) :-
-    Iter > N.
-create_ships_shapes(Iter, NShips, [NewShape | RestShapes]) :-
-    Iter =< N,
-    Shape1 = 1,
-    Shape2 = 1,
-    domain([NewShape], Shape1, Shape2),
-    Next is Iter+1,
-    create_ships_shapes(Next, NShips, RestShapes).
-*/
-
+/**
+ * Create Water blocks
+ * createWaterBlocks(+LastAssignedID, +WaterBlocksPositions, -WaterBlocks, -NewLastAssignedID)
+ * Creates a list of objects containing water blocks in the provided positions.
+ *
+ * LastAssignedID -> Last ID that was assigned.
+ * WaterBlocksPositions -> Water blocks positions.
+ * WaterBlocks -> List containing the newly created water blocks objects.
+ * NewLastAssignedID -> New last ID assigned, after creating all the water blocks.
+ */
 createWaterBlocks(ID, [], [], ID).
 createWaterBlocks(LastAssignedID, [ X/Y | WaterBlocksL], [ object(CurrID, 1, [X, Y]) | WaterBlocks], LastAssignedID2) :-
     CurrID is LastAssignedID + 1,
     createWaterBlocks(CurrID, WaterBlocksL, WaterBlocks, LastAssignedID2).
 
-
-
-/* Collect the IDs of the objects in a list */
+/**
+ * Get objects IDs
+ * getObjectsIDs(+Objects, -ObjectsIDs)
+ * Collect the IDs of the objects in a list
+ *
+ * Objects -> List of objects to collect IDs.
+ * ObjectsIDs -> List of IDs of the objects.
+ */
 getObjectsIDs([], []).
 getObjectsIDs([object(ID, _, _) | Rest], [ID | RestIDs]) :-
     getObjectsIDs(Rest, RestIDs).
 
-% second point is farther from origin, or at same distance but with higher X
-% replaced by 'lex' in geost Options
+/**
+ * Eliminate coordinates symmmetry
+ * eliminate_coords_symmetry(+X1, +Y1, +X2, +Y2)
+ * Applies a restriction between 2 points to eliminate symmetry in the labeling answers.
+ * Was replaced by 'lex' in Options in geost, but could be used.
+ *
+ * X1 -> X coordinate of first point
+ * Y1 -> Y coordinate of first point
+ * X2 -> X coordinate of second point
+ * Y2 -> Y coordinate of second point
+ */
 eliminate_coords_symmetry(X1, Y1, X2, Y2) :-
+    % second point is farther from origin, or at same distance but with higher X
     (X1 + Y1 #< X2 + Y2) #\/ (X1 + Y1 #= X2 + Y2 #/\ X1 #=< X2).
 
-
+/**
+ * Apply shape size restrictions
+ * apply_shape_size_restrictions(+ShapeID, Width, -Height)
+ * Applies a restriction, given a shape size, on its width and height.
+ *
+ * ShapeID -> ID of shape
+ * Width -> Width of given shape
+ * Height -> Height of given shape
+ */
 apply_shape_size_restrictions(ShapeID, Width, Height) :-
     (ShapeID #= 1 #/\ Width #= 1 #/\ Height #= 1) #\/
     (ShapeID #= 2 #/\ Width #= 1 #/\ Height #= 2) #\/
@@ -647,9 +655,15 @@ apply_shape_size_restrictions(ShapeID, Width, Height) :-
     (ShapeID #= 6 #/\ Width #= 1 #/\ Height #= 4) #\/
     (ShapeID #= 7 #/\ Width #= 4 #/\ Height #= 1).
 
-/*
-    Count number of ships in a row
-*/
+/**
+ * Count ships in row
+ * count_ships_in_row(+Row, +Ships, -Count)
+ * Count number of ships in a row, having in account restrictions.
+ *
+ * Row -> Target Row.
+ * Ships -> List with all the ships, to iterate over.
+ * Count -> Resulting count.
+ */
 count_ships_in_row(_, [], 0).
 count_ships_in_row(Row, [object(_, CurrShapeID, [_, Y]) | RestShips], Count) :-  
     apply_shape_size_restrictions(CurrShapeID, Width, Height),
@@ -659,9 +673,15 @@ count_ships_in_row(Row, [object(_, CurrShapeID, [_, Y]) | RestShips], Count) :-
     Count #= NextCount + Matched * Width,
     count_ships_in_row(Row, RestShips, NextCount).
 
-/*
-    Restrict number of ships per row to the given values
-*/
+/**
+ * Force horizontal ships counts.
+ * force_horizontal_ships_counts(+Iter, +HorizontalCounts, +Ships)
+ * Restrict number of ships' segments per row to the given values.
+ *
+ * Iter -> Current row.
+ * HorizontalCounts -> List with count of segments per row.
+ * Ships -> List with all the ships.
+ */
 force_horizontal_ships_counts(I, Vals, _) :-
     length(Vals, L),
     I > L.
@@ -679,9 +699,15 @@ force_horizontal_ships_counts(Iter, HorizontalCounts, Ships) :-
     Next is Iter+1,
     force_horizontal_ships_counts(Next, HorizontalCounts, Ships).
 
-/*
-    Count number of ships in a column
-*/
+/**
+ * Count ships count_ships_in_col row
+ * count_ships_in_col(+Col, +Ships, -Count)
+ * Count number of ships in a column, having in account restrictions.
+ *
+ * Col -> Target column.
+ * Ships -> List with all the ships, to iterate over.
+ * Count -> Resulting count.
+ */
 count_ships_in_col(_, [], 0).
 count_ships_in_col(Col, [object(_, CurrShapeID, [X, _]) | RestShips], Count) :-   
     apply_shape_size_restrictions(CurrShapeID, Width, Height),
@@ -691,9 +717,15 @@ count_ships_in_col(Col, [object(_, CurrShapeID, [X, _]) | RestShips], Count) :-
     Count #= NextCount + Matched * Height,
     count_ships_in_col(Col, RestShips, NextCount).
 
-/*
-    Restrict number of ships per row to the given values
-*/
+/**
+ * Force vertical ships counts.
+ * force_vertical_ships_counts(+Iter, +VerticalCounts, +Ships)
+ * Restrict number of ships' segments per column to the given values.
+ *
+ * Iter -> Current column.
+ * VerticalCounts -> List with count of segments per column.
+ * Ships -> List with all the ships.
+ */
 force_vertical_ships_counts(I, Vals, _) :-
     length(Vals, L),
     I > L.
@@ -711,6 +743,17 @@ force_vertical_ships_counts(Iter, VerticalCounts, Ships) :-
     Next is Iter+1,
     force_vertical_ships_counts(Next, VerticalCounts, Ships).
 
+/**
+ * Create board
+ * create_board(+Dimensions, +Ships, +Shapes, +WaterBlocks, -NewBoard)
+ * Creates a board, a list of lists, with given ships and water blocks.
+ *
+ * Dimensions -> Size of the board, in the format Rows/Cols.
+ * Ships -> List with the ships placed on the board, list of objects.
+ * Shapes -> List with all the shapes of the ships.
+ * WaterBlocks -> List with positions of the water blocks.
+ * NewBoard -> Board that was created.
+ */
 create_board(Rows/Cols, Ships, Shapes, WaterBlocks, NewBoard) :-
     length(Board, Rows),
     assign_rows_length(Board, Cols),
@@ -718,12 +761,29 @@ create_board(Rows/Cols, Ships, Shapes, WaterBlocks, NewBoard) :-
     draw_water_blocks(Board, WaterBlocks),
     fill_missing(Board),
     reverse(Board, NewBoard).
-    
+
+/**
+ * Assign rows length
+ * assign_rows_length(+ListOfLists, +Size)
+ * Sets the size of each list in a list of lists.
+ *
+ * ListOfLists -> List with lists which size should be changed.
+ * Size -> Size of each list.
+ */
 assign_rows_length([], _) :- !.
 assign_rows_length([Row | Rest], Cols) :-
     length(Row, Cols),
     assign_rows_length(Rest, Cols).
 
+/**
+ * Get shape
+ * get_shape(+ShapeID, +Shapes, -Shape)
+ * Finds the shape with given ID.
+ *
+ * ShapeID -> ID of shape to find.
+ * Shapes -> List of shapes.
+ * Shape -> Target shape.
+ */
 get_shape(ShapeID, [Shape | _], Shape) :-
     sbox(CurrShapeID, _, _) = Shape,
     ShapeID = CurrShapeID.
@@ -733,7 +793,15 @@ get_shape(ShapeID, [Shape | Rest], TargetShape) :-
     ShapeID \= CurrShapeID,
     get_shape(ShapeID, Rest, TargetShape).
 
-% draw ships in the board with 's'
+/**
+ * Draw ships
+ * draw_ships(+Board, +Ships, +Shapes)
+ * Draws the given ships on the board, with an 's'.
+ *
+ * Board -> List of lists that represents the board.
+ * Ships -> List of ships to draw.
+ * Shapes -> List of shapes.
+ */
 draw_ships(_, [], _) :- !.
 draw_ships(Board, [object(_, ShapeID, [X, Y]) | Rest], Shapes) :-
     get_shape(ShapeID, Shapes, Shape),
@@ -744,6 +812,15 @@ draw_ships(Board, [object(_, ShapeID, [X, Y]) | Rest], Shapes) :-
     ), !,
     draw_ships(Board, Rest, Shapes).
 
+/**
+ * Draw ship vertical
+ * draw_ship_vertical(+Board, +Position, +Height)
+ * Draws the ship at position Position on the board, vertically, with given height.
+ *
+ * Board -> List of lists that represents the board.
+ * Position -> X/Y coordinates of ship.
+ * Height -> Vertical size of ship.
+ */
 draw_ship_vertical(_, _, 0) :- !.
 draw_ship_vertical(Board, X/Y, Height) :-
     nth1(Y, Board, Row),
@@ -752,6 +829,15 @@ draw_ship_vertical(Board, X/Y, Height) :-
     NextHeight is Height-1,
     draw_ship_vertical(Board, X/NextY, NextHeight).
 
+/**
+ * Draw ship horizontal
+ * draw_ship_horizontal(+Board, +Position, +Width)
+ * Draws the ship at position Position on the board, horizontally, with given width.
+ *
+ * Board -> List of lists that represents the board.
+ * Position -> X/Y coordinates of ship.
+ * Width -> Horizontal size of ship.
+ */
 draw_ship_horizontal(_, _, 0) :- !.
 draw_ship_horizontal(Board, X/Y, Width) :-
     nth1(Y, Board, Row),
@@ -760,26 +846,53 @@ draw_ship_horizontal(Board, X/Y, Width) :-
     NextWidth is Width-1,
     draw_ship_horizontal(Board, NextX/Y, NextWidth).
 
-% draw water blocks in the board, given by coords X/Y, as 'w'
+/**
+ * Draw water blocks
+ * draw_water_blocks(+Board, +WaterBlocks)
+ * Draws the given water blocks on the board, with a 'w'.
+ *
+ * Board -> List of lists that represents the board.
+ * WaterBlocks -> List of positions of water blocks, in format X/Y.
+ */
 draw_water_blocks(_, []) :- !.
 draw_water_blocks(Board, [X/Y | Rest]) :-
     nth1(Y, Board, Row),
     nth1(X, Row, w),
     draw_water_blocks(Board, Rest).
 
-% draw ship blocks in the board, given by coords X/Y, as 's'
-draw_ship_blocks(_, []) :- !.
-draw_ship_blocks(Board, [X/Y | Rest]) :-
+/**
+ * Draw required ship blocks
+ * draw_required_ship_blocks(+Board, +RequiredPositions)
+ * Draws positions that must have a ship on the board, with an 's'.
+ *
+ * Board -> List of lists that represents the board.
+ * RequiredPositions -> List of positions in format X/Y.
+ */
+draw_required_ship_blocks(_, []) :- !.
+draw_required_ship_blocks(Board, [X/Y | Rest]) :-
     nth1(Y, Board, Row),
     nth1(X, Row, s),
-    draw_ship_blocks(Board, Rest).
+    draw_required_ship_blocks(Board, Rest).
 
-% assign remaining variables in board to 'e', empty
+/**
+ * Fill missing
+ * fill_missing(+Board)
+ * Assigns value 'e' to each remaining variable in the board.
+ *
+ * Board -> List of lists that represents the board.
+ */
 fill_missing([]) :- !.
 fill_missing([Row | Rest]) :-
     fill_missing_row(Row),
     fill_missing(Rest).
 
+/**
+ * Fill missing row
+ * fill_missing_row(+Row)
+ * Assigns value 'e' to each remaining variable in the row.
+ *
+ * Row -> List that represents a row.
+ */
 fill_missing_row([]) :- !.
 fill_missing_row([Ele | Rest]) :-
     (
@@ -787,3 +900,11 @@ fill_missing_row([Ele | Rest]) :-
         Ele = e
     ), !,
     fill_missing_row(Rest).
+
+    
+test :-
+    HorizontalCounts = [3, 2, 0, 4, 0, 3, 0, 3, 1, 4],
+    VerticalCounts = [1, 4, 1, 0, 4, 4, 1, 3, 1, 1],
+    WaterBlocks = [5/6, 1/4], % get water blocks from board
+    RequiredPositions = [5/4],
+    solve_battleships(10/10, 10, WaterBlocks, RequiredPositions, HorizontalCounts, VerticalCounts).
