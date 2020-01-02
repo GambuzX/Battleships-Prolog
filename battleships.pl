@@ -198,7 +198,6 @@ generate_board(Rows, Columns, Board) :-
     domain([S8, S9], 4, 5),
     domain([S10], 6, 7),
 
-    StartObjID = 1,
     Ships = [
         object(1, S1, [X1, Y1]),
         object(2, S2, [X2, Y2]),
@@ -467,7 +466,7 @@ get_row_blocks([Pos|OtherPos], Char, Row, Column, Blocks) :-
     The board should be imagined with increasing y and figures growing upwards.
 */
 solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCounts, VerticalCounts) :-
-
+    
     ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
     X_Coords = [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10],
     Y_Coords = [Y1, Y2, Y3, Y4, Y5, Y6, Y7, Y8, Y9, Y10],
@@ -481,7 +480,6 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
     domain([S8, S9], 4, 5),
     domain([S10], 6, 7),
 
-    StartObjID = 1,
     Ships = [
         object(1, S1, [X1, Y1]),
         object(2, S2, [X2, Y2]),
@@ -717,9 +715,9 @@ create_board(Rows/Cols, Ships, Shapes, WaterBlocks, NewBoard) :-
     length(Board, Rows),
     assign_rows_length(Board, Cols),
     draw_ships(Board, Ships, Shapes),
-    reverse(Board, NewBoard),
-    draw_water_blocks(NewBoard, WaterBlocks),
-    fill_missing(NewBoard).
+    draw_water_blocks(Board, WaterBlocks),
+    fill_missing(Board),
+    reverse(Board, NewBoard).
     
 assign_rows_length([], _) :- !.
 assign_rows_length([Row | Rest], Cols) :-
