@@ -171,7 +171,7 @@ count_column_parts([Row|OtherRows], ColNum, ColVal) :-
     count_column_parts(OtherRows, ColNum, NextColVal),
     ColVal is NextColVal + 1, !.
 
-count_column_parts([Row|OtherRows], ColNum, ColVal) :-
+count_column_parts([_|OtherRows], ColNum, ColVal) :-
     count_column_parts(OtherRows, ColNum, ColVal), !.
 
 /**
@@ -369,7 +369,8 @@ get_battleships_board(FileName) :-
  * WaterBlocks -> List with the positions of the water blocks 
  */
 get_water_blocks(Board, WaterBlocks) :-
-    get_blocks(Board, w, 1, WaterBlocks), !.
+    length(Board, NumRows),
+    get_blocks(Board, w, NumRows, WaterBlocks), !.
 
 /**
  * Get Ship Blocks
@@ -380,7 +381,8 @@ get_water_blocks(Board, WaterBlocks) :-
  * ShipBlocks -> List with the positions of the ship blocks 
  */
 get_ship_blocks(Board, ShipBlocks) :-
-    get_blocks(Board, s, 1, ShipBlocks), !.
+    length(Board, NumRows),
+    get_blocks(Board, s, NumRows, ShipBlocks), !.
 
 /**
  * Get Empty Blocks
@@ -391,7 +393,8 @@ get_ship_blocks(Board, ShipBlocks) :-
  * Empty -> List with the positions of the empty blocks 
  */
 get_empty_blocks(Board, EmptyBlocks) :-
-    get_blocks(Board, e, 1, EmptyBlocks), !.
+    length(Board, NumRows),
+    get_blocks(Board, e, NumRows, EmptyBlocks), !.
 
 /**
  * Get Blocks
@@ -406,7 +409,7 @@ get_empty_blocks(Board, EmptyBlocks) :-
 get_blocks([], _, _, []) :- !. 
 
 get_blocks([FirstRow|OtherRows], Char, Row, Blocks) :-
-    NextRow is Row + 1,
+    NextRow is Row - 1,
     get_blocks(OtherRows, Char, NextRow, NextBlocks),
     get_row_blocks(FirstRow, Char, Row, 1, RowBlocks),
     append(RowBlocks, NextBlocks, Blocks), !.
@@ -581,19 +584,19 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
     labeling([ffc, median], AllVars),
     create_board(Rows/Columns, Ships, Shapes, WaterBlocksL, FinalBoard),
     display_board(FinalBoard, Rows/Columns, HorizontalCounts, VerticalCounts), 
-    /*(
+    (
         write('Get other solution? (Y/N) '),
-        get_char(C), !,
-        (
-            C \= 'Y',
-            C \= 'y',
-            !;
-            fail
-        );
-
+        get_char(C),
+        get_char(_), %Enter
+        C \= 'Y',
+        C \= 'y',
+        !;
         fail
-    ).*/
-    fail.
+    ).
+
+solve_battleships(_, _, _, _, _, _) :-
+    write('No new solutions were found to the problem!'), nl, nl, !.
+ 
 
 /**
  * Create Water blocks
