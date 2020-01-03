@@ -280,6 +280,12 @@ generate_board(Rows, Columns, Board) :-
                     #\ tooclose(Obj1, Obj2, Shape1, Shape2, Dist, 1) #\/ % check horizontally
                     #\ tooclose(Obj1, Obj2, Shape1, Shape2, Dist, 2)))), % check vertically
 
+        % guarantee the whole ship fits inside the board
+        (forall(Ship, objects(ShipsIDs),
+            forall(Shape, sboxes([Obj^sid]),
+                end(Ship, Shape, 1) #=< Columns + 1 #/\ % +1 because 'end' calculates ship edge, not position
+                end(Ship, Shape, 2) #=< Rows + 1))),
+                
         % for all combinations of different objects
         (forall(Obj1, objects(ShipsIDs),
             forall(Obj2, objects(ShipsIDs),
@@ -585,6 +591,12 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
         % checks if 2 objects intersect
         (intersect(Obj1, Obj2) --->
             #\ apart(Obj1, Obj2, 0)),
+
+        % guarantee the whole ship fits inside the board
+        (forall(Ship, objects(ShipsIDs),
+            forall(Shape, sboxes([Obj^sid]),
+                end(Ship, Shape, 1) #=< Columns + 1 #/\ % +1 because 'end' calculates ship edge, not position
+                end(Ship, Shape, 2) #=< Rows + 1))),
 
         % check ships are apart by at least 1 unit, in all directions
         (forall(Obj1, objects(ShipsIDs),
