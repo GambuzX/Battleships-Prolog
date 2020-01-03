@@ -255,15 +255,7 @@ generate_board(Rows, Columns, Board) :-
         sbox(7, [0,0], [4, 1])
     ],
 
-    Bounding_box_x is Columns+1,
-    Bounding_box_y is Rows+1,
-    Options = [
-        /*
-            limit all positions occupied by the objects to be inside of the board
-            by default, geost only guarantees that the object origin is inside the specified domain
-        */
-        bounding_box([1, 1], [Bounding_box_x, Bounding_box_y]),
-        
+    Options = [        
         % eliminate symmetries in answers
         lex([1,2,3,4]),
         lex([5,6,7]),
@@ -543,15 +535,7 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
         sbox(7, [0,0], [4, 1])
     ],
 
-    Bounding_box_x is Columns+1,
-    Bounding_box_y is Rows+1,
     Options = [
-        /*
-            limit all positions occupied by the objects to be inside the board
-            by default, geost only guarantees that the object origin is inside the specified domain
-        */
-        bounding_box([1, 1], [Bounding_box_x, Bounding_box_y]),
-
         /*
             lift constraint in geost that objects should be non-overlapping.
             that behaviour will be handled by the Rules.
@@ -952,8 +936,8 @@ fill_missing_row([Ele | Rest]) :-
 
     
 test :-
-    HorizontalCounts = [3, 2, 0, 4, 0, 3, 0, 3, 1, 4],
-    VerticalCounts = [1, 4, 1, 0, 4, 4, 1, 3, 1, 1],
-    WaterBlocks = [5/6, 1/4], % get water blocks from board
-    RequiredPositions = [10/6],
+    HorizontalCounts = [1, 1, 4, 0, 5, 1, 2, 2, 4, 0],
+    VerticalCounts = [1, 1, 1, 6, 1, 1, 3, 0, 2, 4],
+    WaterBlocks = [], % get water blocks from board
+    RequiredPositions = [],
     solve_battleships(10/10, 10, WaterBlocks, RequiredPositions, HorizontalCounts, VerticalCounts).
