@@ -82,7 +82,7 @@ choose_menu_option(3).
     
     % generate board with all the ships
     generate_board(NumRows, NumColumns, Board),
-    
+
     % count values in the rows
     length(RowValues, NumRows),
     get_row_values(Board, RowVal),
@@ -114,15 +114,25 @@ generate_board_option.
  * NewBoard -> New generated board
  */
 create_new_board(Board, NumRows, NumColumns, NewBoard) :-
-    get_empty_blocks(Board, EmptyBlocks),
+    reverse(Board, RevBoard),
+    
+    % get blocks with an e
+    get_empty_blocks(RevBoard, EmptyBlocks),
+
+    % choose two to be the water
     random_select(Water1, EmptyBlocks, OtherBlocks),
     random_member(Water2, OtherBlocks),
-    get_ship_blocks(Board, ShipBlocks),
+
+    % get blocks with an s
+    get_ship_blocks(RevBoard, ShipBlocks),
     random_member(Ship, ShipBlocks),
+
     length(NewBoard, NumRows),
     assign_rows_length(NewBoard, NumColumns),
+   
     draw_required_ship_blocks(NewBoard, [Ship]),
     draw_water_blocks(NewBoard, [Water1, Water2]),
+   
     fill_missing(NewBoard), !.
 
 /** 
@@ -278,16 +288,6 @@ generate_board(Rows, Columns, Board) :-
                     #\ tooclose(Obj1, Obj2, Shape1, Shape2, Dist, 1) #\/ % check horizontally
                     #\ tooclose(Obj1, Obj2, Shape1, Shape2, Dist, 2)))), % check vertically
 
-        (dim_intersects(Obj, Shape, Coord, Dim) --->
-            origin(Obj, Shape, Dim) #=< Coord #/\ Coord #=< end(Obj, Shape, Dim)
-        ),
-
-        % checks if Object intersects given position
-        (intersect(Obj, X/Y) --->
-            forall(Shape, sboxes([Obj^sid]),
-                dim_intersects(Obj, Shape, X, 0) #/\
-                dim_intersects(Obj, Shape, Y, 1))),
-
         % for all combinations of different objects
         (forall(Obj1, objects(ShipsIDs),
             forall(Obj2, objects(ShipsIDs),
@@ -298,8 +298,18 @@ generate_board(Rows, Columns, Board) :-
     geost(Ships, Shapes, Options, Rules),
 
     append([ShipsShapes, X_Coords, Y_Coords], AllVars),
-    labeling([ffc, median], AllVars), 
+    labeling([ffc, value(select_random)], AllVars), 
     create_board(Rows/Columns, Ships, Shapes, [], Board).
+
+/** 
+ * Select Random
+ * Chooses a random value to a variable
+ */
+select_random(Var, Rest, BB0, BB1):- 
+    fd_set(Var, Set), fdset_to_list(Set, List),
+    random_member(Value, List), 
+    ( first_bound(BB0, BB1), Var #= Value ;
+    later_bound(BB0, BB1), Var #\= Value ).
 
 /**
  * Add files directory and .txt extension
@@ -486,8 +496,6 @@ get_row_blocks([Pos|OtherPos], Char, Row, Column, Blocks) :-
  * VerticalCounts -> List with the number of ship segments that must appear in each col
  */
 solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCounts, VerticalCounts) :-
-    write(RequiredPosL), nl, nl,
-    write(WaterBlocksL), nl, nl,
     % Domain variables
     ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
     X_Coords = [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10],
