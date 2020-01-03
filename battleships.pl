@@ -289,7 +289,7 @@ generate_board(Rows, Columns, Board) :-
                 dim_intersects(Obj, Shape, Y, 1))),
 
         % for all combinations of different objects
-        (forall(Obj1, objects(ShipsIDs), % TODO these ids must come from outside and not be hardcoded
+        (forall(Obj1, objects(ShipsIDs),
             forall(Obj2, objects(ShipsIDs),
                 % if different objects, must be apart 1 unit
                 (Obj2^oid #>= Obj1^oid) #\/ apart(Obj1, Obj2, 1))))
@@ -516,11 +516,13 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
         object(10, S10, [X10, Y10])
     ],
     LastAssignedID = 10,
-    createWaterBlocks(LastAssignedID, WaterBlocksL, WaterBlocks, LastAssignedID2),
+    createUnitaryObjects(LastAssignedID, WaterBlocksL, WaterBlocks, LastAssignedID2),
+    createUnitaryObjects(LastAssignedID2, RequiredPosL, RequiredPos, LastAssignedID3),
 
     % collect IDs of objects to use in geost Rules
     getObjectsIDs(Ships, ShipsIDs),
     getObjectsIDs(WaterBlocks, WaterBlocksIDs),
+    getObjectsIDs(RequiredPos, RequiredPosIDs),
 
     % horizontal and vertical shapes for each ship size
     Shapes = [
@@ -541,6 +543,12 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
             by default, geost only guarantees that the object origin is inside the specified domain
         */
         bounding_box([1, 1], [Bounding_box_x, Bounding_box_y]),
+
+        /*
+            lift constraint in geost that objects should be non-overlapping.
+            that behaviour will be handled by the Rules.
+        */
+        overlap(true),
 
         % eliminate symmetries in answers
         lex([1,2,3,4]),
@@ -582,32 +590,28 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
                     #\ tooclose(Obj1, Obj2, Shape1, Shape2, Dist, 1) #\/ % check horizontally
                     #\ tooclose(Obj1, Obj2, Shape1, Shape2, Dist, 2)))), % check vertically
 
-        (dim_intersects(Obj, Shape, Coord, Dim) --->
-            origin(Obj, Shape, Dim) #=< Coord #/\ Coord #=< end(Obj, Shape, Dim)
-        ),
+        % checks if 2 objects intersect
+        (intersect(Obj1, Obj2) --->
+            #\ apart(Obj1, Obj2, 0)),
 
-        % checks if Object intersects given position
-        (intersects(Obj, X/Y) --->
-            forall(Shape, sboxes([Obj^sid]),
-                dim_intersects(Obj, Shape, X, 0) #/\
-                dim_intersects(Obj, Shape, Y, 1))),
-
-        % for all combinations of different objects
-        (forall(Obj1, objects(ShipsIDs), % TODO these ids must come from outside and not be hardcoded
+        % check ships are apart by at least 1 unit, in all directions
+        (forall(Obj1, objects(ShipsIDs),
             forall(Obj2, objects(ShipsIDs),
                 % if different objects, must be apart 1 unit
                 (Obj2^oid #>= Obj1^oid) #\/ apart(Obj1, Obj2, 1)))),
 
+        % verify there is not ship in water blocks
         (forall(Obj, objects(ShipsIDs),
             forall(WaterBlock, objects(WaterBlocksIDs),
                 % must not intersect. apart by 0 units means touching each other but not intersecting
                 apart(Obj, WaterBlock, 0)))),
-
-        (forall(Req, RequiredPosL, 
-            exists(Obj, objects(ShipsIDs), intersects(Obj, Req))))
+        
+        % for all required positions, check there is a ship intersecting
+        (forall(ReqPos, objects(RequiredPosIDs),
+            exists(Ship, objects(ShipsIDs), intersect(Ship, ReqPos))))
     ],
     
-    append([Ships, WaterBlocks], AllObjects),
+    append([Ships, WaterBlocks, RequiredPos], AllObjects),
     geost(AllObjects, Shapes, Options, Rules),
 
     % apply restrictions of ships' segments count in rows and columns
@@ -617,7 +621,7 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
     append([ShipsShapes, X_Coords, Y_Coords], AllVars),
     labeling([ffc, median], AllVars),
     create_board(Rows/Columns, Ships, Shapes, WaterBlocksL, FinalBoard),
-    display_board(FinalBoard, Rows/Columns, HorizontalCounts, VerticalCounts), 
+    display_board(FinalBoard, Rows/Columns, HorizontalCounts, VerticalCounts),
     (
         write('Get other solution? (Y/N) '),
         get_char(C),
@@ -629,23 +633,23 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
     ).
 
 solve_battleships(_, _, _, _, _, _) :-
-    write('No new solutions were found to the problem!'), nl, nl, !.
+    write('No new solutions were found for the problem!'), nl, nl, !.
  
 
 /**
- * Create Water blocks
- * createWaterBlocks(+LastAssignedID, +WaterBlocksPositions, -WaterBlocks, -NewLastAssignedID)
- * Creates a list of objects containing water blocks in the provided positions.
+ * Create Unitary objects
+ * createUnitaryObjects(+LastID, +PositionsL, -Objects, -NewLastID)
+ * Creates a list of objects of size 1x1 in the given positions.
  *
- * LastAssignedID -> Last ID that was assigned.
- * WaterBlocksPositions -> Water blocks positions.
- * WaterBlocks -> List containing the newly created water blocks objects.
- * NewLastAssignedID -> New last ID assigned, after creating all the water blocks.
+ * LastID -> Last ID that was assigned.
+ * PositionsL -> New blocks positions.
+ * Objects -> List containing the newly created blocks objects.
+ * NewLastID -> New last ID assigned, after creating all the blocks.
  */
-createWaterBlocks(ID, [], [], ID).
-createWaterBlocks(LastAssignedID, [ X/Y | WaterBlocksL], [ object(CurrID, 1, [X, Y]) | WaterBlocks], LastAssignedID2) :-
-    CurrID is LastAssignedID + 1,
-    createWaterBlocks(CurrID, WaterBlocksL, WaterBlocks, LastAssignedID2).
+createUnitaryObjects(ID, [], [], ID).
+createUnitaryObjects(LastID, [X/Y | PositionsL], [object(CurrID, 1, [X,Y]) | Objects], NewLastID) :-
+    CurrID is LastID + 1,
+    createUnitaryObjects(CurrID, PositionsL, Objects, NewLastID).
 
 /**
  * Get objects IDs
@@ -943,5 +947,5 @@ test :-
     HorizontalCounts = [3, 2, 0, 4, 0, 3, 0, 3, 1, 4],
     VerticalCounts = [1, 4, 1, 0, 4, 4, 1, 3, 1, 1],
     WaterBlocks = [5/6, 1/4], % get water blocks from board
-    RequiredPositions = [5/4],
+    RequiredPositions = [10/6],
     solve_battleships(10/10, 10, WaterBlocks, RequiredPositions, HorizontalCounts, VerticalCounts).
