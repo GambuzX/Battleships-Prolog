@@ -66,20 +66,39 @@ choose_menu_option(3).
  * Generate Board Option
  */
  generate_board_option :-
-    write('GENERATE BOARD'), nl, nl,
-    write('Insert the name of the output file (please end the name with a \'.\'): '),
+    display_generate_board,
+
+    % read the filename
     read(FileName), !,
+
+    % change FileName to files/[FileName].txt 
     change_file_name(FileName, FileRelPath),
+
+    % get the absolute path to the file
     get_file_path(FileRelPath, FilePath), !,
+    
+    % read the board size
     read_board_size(NumRows, NumColumns),
+    
+    % generate board with all the ships
     generate_board(NumRows, NumColumns, Board),
+    
+    % count values in the rows
     length(RowValues, NumRows),
     get_row_values(Board, RowVal),
     reverse(RowVal, RowValues),
+
+    % count values in the columns
     length(ColumnValues, NumColumns),
     get_column_values(Board, 1, ColumnValues), !,
+
+    % create new board
     create_new_board(Board, NumRows, NumColumns, NewBoard),
+
+    % display the generated board
     display_board(NewBoard, NumRows/NumColumns, RowValues, ColumnValues),
+    
+    % write the board to the file
     write(FilePath, NumRows/NumColumns, NewBoard, RowValues, ColumnValues), !.
 
 generate_board_option.
@@ -341,7 +360,21 @@ choose_board(5) :-
     get_battleships_board(FileName),
     battleships_menu, !.
 
-choose_board(6).
+choose_board(6) :-
+    display_choose_input_board,
+
+    % read the filename
+    read(FileName), !,
+    get_code(_), % Return code
+
+    % change FileName to files/[FileName].txt 
+    change_file_name(FileName, FileRelPath),
+
+    % get the absolute path to the file
+    get_file_path(FileRelPath, FilePath), !,
+
+    get_battleships_board(FilePath),
+    battleships_menu, !.
 
 choose_board(_) :-
     battleships_menu, !.
@@ -453,7 +486,8 @@ get_row_blocks([Pos|OtherPos], Char, Row, Column, Blocks) :-
  * VerticalCounts -> List with the number of ship segments that must appear in each col
  */
 solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCounts, VerticalCounts) :-
-    
+    write(RequiredPosL), nl, nl,
+    write(WaterBlocksL), nl, nl,
     % Domain variables
     ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
     X_Coords = [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10],
@@ -553,7 +587,7 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
         ),
 
         % checks if Object intersects given position
-        (intersect(Obj, X/Y) --->
+        (intersects(Obj, X/Y) --->
             forall(Shape, sboxes([Obj^sid]),
                 dim_intersects(Obj, Shape, X, 0) #/\
                 dim_intersects(Obj, Shape, Y, 1))),
@@ -569,7 +603,7 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
                 % must not intersect. apart by 0 units means touching each other but not intersecting
                 apart(Obj, WaterBlock, 0)))),
 
-        (forall(Req, RequiredPositions, 
+        (forall(Req, RequiredPosL, 
             exists(Obj, objects(ShipsIDs), intersects(Obj, Req))))
     ],
     

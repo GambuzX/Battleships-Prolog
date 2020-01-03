@@ -63,7 +63,9 @@ read_board_size(NumRows, NumColumns) :-
             write('(Both number must be greater than 6 and the tuple should end with a \'.\''), nl,
             read(NumRows/NumColumns), 
             NumRows >= 7,
-            NumColumns >= 7, !;
+            NumColumns >= 7, 
+            get_code(_), % Return code 
+            !;
 
-            error_msg('Invalid option!')
+            error_msg('Invalid size!')
         ).    

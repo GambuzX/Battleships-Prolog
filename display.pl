@@ -290,3 +290,18 @@ display_choose_board :-
     write(' 5- Solve Fifth Board.'), nl,
     write(' 6- Solve Other Board.'), nl,
     write(' 7- Back to Menu'), nl, nl.
+
+/**
+ * Display Generate Board
+ * display_generate_board
+ */
+display_generate_board :-
+    write('GENERATE BOARD'), nl, nl,
+    write('Insert the name of the output file (please end the name with a \'.\'): ').
+
+/**
+ * Display Choose Input Board
+ * display_choose_input_board
+ */
+ display_choose_input_board :-
+    write('Insert the name of the input file (please end the name with a \'.\'): ').
