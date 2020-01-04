@@ -482,9 +482,15 @@ choose_board(_) :-
 get_battleships_board(FileName) :-
     read(FileName, Row/Column, Board, RowVal, ColVal),
     display_board(Board, Row/Column, RowVal, ColVal),
-    get_water_blocks(Board, WaterBlocks),
-    get_ship_blocks(Board, RequiredBlocks),
-    solve_battleships(Row/Column, WaterBlocks, [], [], [], [], [], [], RowVal, ColVal).
+    length(Board, NumRows),
+    get_blocks(Board, w, NumRows, WaterBlocks),
+    get_blocks(Board, s, NumRows, SubmarineBlocks),
+    get_blocks(Board, m, NumRows, MiddleBlocks),
+    get_blocks(Board, l, NumRows, LeftBlocks),
+    get_blocks(Board, b, NumRows, BottomBlocs),
+    get_blocks(Board, r, NumRows, RightBloks),
+    get_blocks(Board, t, NumRows, TopBlocks),
+    solve_battleships(Row/Column, WaterBlocks, SubmarineBlocks, MiddleBlocks, LeftBlocks, BottomBlocs, RightBloks, TopBlocks, RowVal, ColVal).
    
 
 /**
@@ -568,14 +574,18 @@ get_row_blocks([Pos|OtherPos], Char, Row, Column, Blocks) :-
 
 /**
  * Solve battleships
- * solve_battleships(+Dimensions, +NShips, +WaterBlocksList, +RequiredPositionsList, +HorizontalCounts, +VerticalCounts)
+ * solve_battleships(+Dimensions, +WaterBlocksList, +SubmarinesL, +MidPosL, +LeftPosL, +BottomPosL, +RightPosL, +TopPosL, +HorizontalCounts, +VerticalCounts)
  * Solves a battleships problem, given the provided input values.
  * Finds the position of all the ships in the board.
  *
  * Dimensions -> Size of the board, in format Rows/Columns
- * NShips -> Number of ships of each dimension
  * WaterBlocksList -> List of positions X/Y of Water blocks in the board
- * RequiredPositionsList -> List of positions X/Y that must contain a ship
+ * SubmarinesL -> Positions of required submarines, 1x1 ships
+ * MidPosL -> Positions that must be the middle of a ship
+ * LeftPosL -> Positions that must be the start of a horizontal ship
+ * BottomPosL -> Positions that must be the start of a vertical ship
+ * RightPosL -> Positions that must be the end of a horizontal ship
+ * TopPosL -> Positions that must be the start of a vertical ship
  * HorizontalCounts -> List with the number of ship segments that must appear in each row
  * VerticalCounts -> List with the number of ship segments that must appear in each col
  */
