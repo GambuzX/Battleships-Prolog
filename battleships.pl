@@ -8,6 +8,16 @@
 
 /**
  * Battleships
+ * battleships
+ * Main function of the puzzle
+ * 
+ * WARNING: Change the working directory to the directory where this file is so that the program can run properly.
+ */
+battleships :-
+    battleships(''), !.
+
+/**
+ * Battleships
  * battleships(+Path)
  * Main function of the puzzle
  *
