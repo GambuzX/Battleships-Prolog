@@ -330,7 +330,13 @@ generate_board(Rows, Columns, Board) :-
         sbox(7, [0,0], [4, 1])
     ],
 
-    Options = [        
+    Options = [      
+        /*
+            lift constraint in geost that objects should be non-overlapping.
+            that behaviour will be handled by the Rules.
+        */
+        overlap(true),
+          
         % eliminate symmetries in answers
         lex([1,2,3,4]),
         lex([5,6,7]),

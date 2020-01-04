@@ -60,7 +60,7 @@ read_board_size(NumRows, NumColumns) :-
     repeat,
         (
             write('Insert the board size in the format \'NumberRows/NumberColumns\'.'), nl,
-            write('(Both number must be greater than 6 and the tuple should end with a \'.\''), nl,
+            write('(Both numbers must be greater than 6 and the tuple should end with a \'.\''), nl,
             read(NumRows/NumColumns), 
             NumRows >= 7,
             NumColumns >= 7, 
