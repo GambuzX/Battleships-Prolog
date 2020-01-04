@@ -57,7 +57,6 @@ choose_menu_option(2) :-
     generate_board_option,
     battleships_menu, !.
         
-
 choose_menu_option(3).
 
 /**
@@ -119,21 +118,87 @@ create_new_board(Board, NumRows, NumColumns, NewBoard) :-
     % get blocks with an e
     get_empty_blocks(RevBoard, EmptyBlocks),
 
-    % choose two to be the water
-    random_select(Water1, EmptyBlocks, OtherBlocks),
-    random_member(Water2, OtherBlocks),
+    % select water blocks
+    select_random_water_blocks(EmptyBlocks, WaterBlocks),
 
     % get blocks with an s
     get_ship_blocks(RevBoard, ShipBlocks),
-    random_member(Ship, ShipBlocks),
+    
+    % select required blocks
+    select_random_ship_blocks(ShipBlocks, SelectedShipBlocks),
 
     length(NewBoard, NumRows),
     assign_rows_length(NewBoard, NumColumns),
    
-    draw_required_ship_blocks(NewBoard, [Ship]),
-    draw_water_blocks(NewBoard, [Water1, Water2]),
+    draw_required_ship_blocks(NewBoard, SelectedShipBlocks),
+    draw_water_blocks(NewBoard, WaterBlocks),
    
     fill_missing(NewBoard), !.
+
+/**
+ * Select Random Water Blocks
+ * select_random_water_blocks(+Blocks, -WaterBlocks)
+ * Selects random water blocks
+ *
+ * Blocks -> Initial blocks
+ * WaterBlocks -> Selected water blocks
+ */
+select_random_water_blocks(Blocks, WaterBlocks) :-
+    select_random_blocks(Blocks, 'water', WaterBlocks), !.
+
+/**
+ * Select Random Ship Blocks
+ * select_random_ship_blocks(+Blocks, -ShipBlocks)
+ * Selects random ship blocks
+ *
+ * Blocks -> Initial blocks
+ * ShipBlocks -> Selected ship blocks
+ */
+select_random_ship_blocks(Blocks, ShipBlocks) :-
+    select_random_blocks(Blocks, 'ship', ShipBlocks), !.
+
+/**
+ * Select Random Blocks
+ * select_random_blocks(+Blocks, +TypeOfBlocks, -NewBlocks)
+ * Gets the NumBlocks (number of blocks) from the input and selects NumBlocks random blocks
+ *
+ * Blocks -> Initial blocks
+ * TypeOfBlocks -> String with the type of blocks (used in the initial message)
+ * NewBlocks -> Selected blocks
+ */
+select_random_blocks(Blocks, TypeOfBlocks, NewBlocks) :-
+    length(Blocks, Max),
+    write('Select number of '), write(TypeOfBlocks), 
+    write(' blocks (Max='), write(Max), 
+    write('; please end the name with a \'.\'): '),
+    repeat,
+        (
+            read(NumBlocks),
+            get_code(_), % Return code
+            NumBlocks >= 1,
+            NumBlocks =< Max, !;
+
+            error_msg('Invalid number of blocks')
+        ),
+
+    select_blocks(Blocks, NumBlocks, NewBlocks), !.
+
+/**
+ * Select Blocks
+ * selec_blocks(+Blocks, +NumBlocks, -NewBlocks)
+ * Selects NumBlocks blocks from Blocks 
+ *
+ * Blocks -> Initial blocks
+ * NumBlocks -> Number of blocks to select
+ * NewBlocks -> Selected blocks
+ */
+select_blocks(_, 0, []) :- !.
+
+select_blocks(Blocks, NumBlocks, NewBlocks) :-
+    random_select(Block, Blocks, OtherBlocks),
+    NextNum is NumBlocks - 1,
+    select_blocks(OtherBlocks, NextNum, OtherNewBlocks),
+    append([Block], OtherNewBlocks, NewBlocks), !.
 
 /** 
  * Get Row Values
@@ -306,8 +371,10 @@ generate_board(Rows, Columns, Board) :-
 select_random(Var, Rest, BB0, BB1):- 
     fd_set(Var, Set), fdset_to_list(Set, List),
     random_member(Value, List), 
-    ( first_bound(BB0, BB1), Var #= Value ;
-    later_bound(BB0, BB1), Var #\= Value ).
+    ( 
+        first_bound(BB0, BB1), Var #= Value ;
+        later_bound(BB0, BB1), Var #\= Value 
+    ).
 
 /**
  * Add files directory and .txt extension
