@@ -306,3 +306,21 @@ display_generate_board :-
  */
  display_choose_input_board :-
     write('Insert the name of the input file (please end the name with a \'.\'): ').
+
+/**
+ * Reset Timer
+ * reset_timer
+ * Reset statistics timer
+ */
+reset_timer :- 
+    statistics(walltime,_).
+
+/**
+ * Display Time
+ * display_time
+ * Displays the number of seconds of the statistics
+ */ 
+display_time :-
+	statistics(walltime,[_,T]),
+	TS is ((T//10)*10)/1000,
+	nl, write('Time: '), write(TS), write('s'), nl, nl.

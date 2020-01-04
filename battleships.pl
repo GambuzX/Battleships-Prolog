@@ -175,7 +175,7 @@ select_random_blocks(Blocks, TypeOfBlocks, NewBlocks) :-
         (
             read(NumBlocks),
             get_code(_), % Return code
-            NumBlocks >= 1,
+            NumBlocks >= 0,
             NumBlocks =< Max, !;
 
             error_msg('Invalid number of blocks')
@@ -361,7 +361,10 @@ generate_board(Rows, Columns, Board) :-
     geost(Ships, Shapes, Options, Rules),
 
     append([ShipsShapes, X_Coords, Y_Coords], AllVars),
+
+    reset_timer,
     labeling([ffc, value(select_random)], AllVars), 
+    display_time,
     create_board(Rows/Columns, Ships, Shapes, [], Board).
 
 /** 
@@ -690,7 +693,11 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
     force_vertical_ships_counts(1, VerticalCounts, Ships),
 
     append([ShipsShapes, X_Coords, Y_Coords], AllVars),
+    
+    reset_timer, 
     labeling([ffc, median], AllVars),
+    display_time,
+
     create_board(Rows/Columns, Ships, Shapes, WaterBlocksL, FinalBoard),
     display_board(FinalBoard, Rows/Columns, HorizontalCounts, VerticalCounts),
     (
@@ -700,6 +707,7 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
         C \= 'Y',
         C \= 'y',
         !;
+        reset_timer,
         fail
     ).
 
