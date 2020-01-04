@@ -484,7 +484,7 @@ get_battleships_board(FileName) :-
     display_board(Board, Row/Column, RowVal, ColVal),
     get_water_blocks(Board, WaterBlocks),
     get_ship_blocks(Board, RequiredBlocks),
-    solve_battleships(Row/Column, _, WaterBlocks, RequiredBlocks, RowVal, ColVal).
+    solve_battleships(Row/Column, WaterBlocks, [], [], [], [], [], [], RowVal, ColVal).
    
 
 /**
@@ -579,7 +579,7 @@ get_row_blocks([Pos|OtherPos], Char, Row, Column, Blocks) :-
  * HorizontalCounts -> List with the number of ship segments that must appear in each row
  * VerticalCounts -> List with the number of ship segments that must appear in each col
  */
-solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCounts, VerticalCounts) :-
+solve_battleships(Rows/Columns, WaterBlocksL, SubmarinesL, MidPosL, LeftPosL, BottomPosL, RightPosL, TopPosL, HorizontalCounts, VerticalCounts) :-
     % Domain variables
     ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
     X_Coords = [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10],
@@ -608,13 +608,29 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
         object(10, S10, [X10, Y10])
     ],
     LastAssignedID = 10,
+    % water blocks
     createUnitaryObjects(LastAssignedID, WaterBlocksL, WaterBlocks, LastAssignedID2),
-    createUnitaryObjects(LastAssignedID2, RequiredPosL, RequiredPos, LastAssignedID3),
+    % submarines hints
+    createUnitaryObjects(LastAssignedID2, SubmarinesL, SubmarinesPos, LastAssignedID3),
+    % ships' segments hints
+    createUnitaryObjects(LastAssignedID3, MidPosL, MidPos, LastAssignedID4),
+    createUnitaryObjects(LastAssignedID4, LeftPosL, LeftPos, LastAssignedID5),
+    createUnitaryObjects(LastAssignedID5, BottomPosL, BottomPos, LastAssignedID6),
+    createUnitaryObjects(LastAssignedID6, RightPosL, RightPos, LastAssignedID7),
+    createUnitaryObjects(LastAssignedID7, TopPosL, TopPos, _),
+
+    % join all objects in a single list for geost
+    append([Ships, WaterBlocks, SubmarinesPos, MidPos, LeftPos, BottomPos, RightPos, TopPos], AllObjects),
 
     % collect IDs of objects to use in geost Rules
     getObjectsIDs(Ships, ShipsIDs),
     getObjectsIDs(WaterBlocks, WaterBlocksIDs),
-    getObjectsIDs(RequiredPos, RequiredPosIDs),
+    getObjectsIDs(SubmarinesPos, SubmarinesPosIDs),
+    getObjectsIDs(MidPos, MidPosIDs),
+    getObjectsIDs(LeftPos, LeftPosIDs),
+    getObjectsIDs(BottomPos, BottomPosIDs),
+    getObjectsIDs(RightPos, RightPosIDs),
+    getObjectsIDs(TopPos, TopPosIDs),
 
     % horizontal and vertical shapes for each ship size
     Shapes = [
@@ -678,6 +694,38 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
         (intersect(Obj1, Obj2) --->
             #\ apart(Obj1, Obj2, 0)),
 
+        % check if a ship is a submarine, that is, 1x1
+        (isSubmarine(Ship) --->
+            forall(Shape, sboxes([Ship^sid]),
+                end(Ship, Shape, 1) #= origin(Ship, Shape, 1) + 1 #/\
+                end(Ship, Shape, 2) #= origin(Ship, Shape, 2) + 1)),
+
+        % check if a ship is horizontal, that is, height is 1 and width > 1
+        (isHorizontal(Ship) --->
+            forall(Shape, sboxes([Ship^sid]),
+                end(Ship, Shape, 1) #> origin(Ship, Shape, 1) + 1 #/\
+                end(Ship, Shape, 2) #= origin(Ship, Shape, 2) + 1)),
+
+        % check if a ship is vertical, that is, width is 1 and height > 1
+        (isVertical(Ship) --->
+            forall(Shape, sboxes([Ship^sid]),
+                end(Ship, Shape, 1) #= origin(Ship, Shape, 1) + 1 #/\
+                end(Ship, Shape, 2) #> origin(Ship, Shape, 2) + 1)),
+
+        % check if a ship starts at a given position
+        (startsAt(Ship, Position) --->
+            forall(Pos, sboxes([Position^sid]),
+                forall(Shape, sboxes([Ship^sid]),
+                    origin(Ship, Shape, 1) #= origin(Position, Pos, 1) #/\
+                    origin(Ship, Shape, 2) #= origin(Position, Pos, 2)))),
+
+        % check if a ship ends at a given position
+        (endsAt(Ship, Position) --->
+            forall(Pos, sboxes([Position^sid]),
+                forall(Shape, sboxes([Ship^sid]),
+                    end(Ship, Shape, 1) #= end(Position, Pos, 1) #/\
+                    end(Ship, Shape, 2) #= end(Position, Pos, 2)))),        
+
         % guarantee the whole ship fits inside the board
         (forall(Ship, objects(ShipsIDs),
             forall(Shape, sboxes([Obj^sid]),
@@ -696,12 +744,40 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, RequiredPosL, HorizontalCo
                 % must not intersect. apart by 0 units means touching each other but not intersecting
                 apart(Obj, WaterBlock, 0)))),
         
-        % for all required positions, check there is a ship intersecting
-        (forall(ReqPos, objects(RequiredPosIDs),
-            exists(Ship, objects(ShipsIDs), intersect(Ship, ReqPos))))
+        % for all required submarines positions, check they have a submarine
+        (forall(Submarine, objects(SubmarinesPosIDs),
+            exists(Ship, objects(ShipsIDs), 
+                isSubmarine(Ship) #/\ intersect(Ship, Submarine)))),
+
+        % verify that all mid positions are occupied
+        (forall(ShipMidPos, objects(MidPosIDs),
+            exists(Ship, objects(ShipsIDs),
+                intersect(Ship, ShipMidPos) #/\
+                #\ startsAt(Ship, ShipMidPos) #/\
+                #\ endsAt(Ship, ShipMidPos)))),
+
+        % verify that all left start positions are occupied
+        (forall(LeftStartPos, objects(LeftPosIDs),
+            exists(Ship, objects(ShipsIDs),
+                isHorizontal(Ship) #/\ startsAt(Ship, LeftStartPos)))),
+
+        % verify that all bottom start positions are occupied
+        (forall(BottomStartPos, objects(BottomPosIDs),
+            exists(Ship, objects(ShipsIDs),
+                isVertical(Ship) #/\ startsAt(Ship, BottomStartPos)))),
+
+        % verify that all right end positions are occupied
+        (forall(RightEndPos, objects(RightPosIDs),
+            exists(Ship, objects(ShipsIDs),
+                isHorizontal(Ship) #/\ endsAt(Ship, RightEndPos)))),
+
+        % verify that all top end positions are occupied
+        (forall(TopEndPos, objects(TopPosIDs),
+            exists(Ship, objects(ShipsIDs),
+                isVertical(Ship) #/\ endsAt(Ship, TopEndPos))))
+
     ],
-    
-    append([Ships, WaterBlocks, RequiredPos], AllObjects),
+
     geost(AllObjects, Shapes, Options, Rules),
 
     % apply restrictions of ships' segments count in rows and columns
@@ -1039,8 +1115,13 @@ fill_missing_row([Ele | Rest]) :-
 
     
 test :-
-    HorizontalCounts = [1, 1, 4, 0, 5, 1, 2, 2, 4, 0],
-    VerticalCounts = [1, 1, 1, 6, 1, 1, 3, 0, 2, 4],
+    HorizontalCounts = [3, 2, 0, 4, 0, 3, 0, 3, 1, 4],
+    VerticalCounts = [1, 4, 1, 0, 4, 4, 1, 3, 1, 1],
     WaterBlocks = [], % get water blocks from board
-    RequiredPositions = [],
-    solve_battleships(10/10, 10, WaterBlocks, RequiredPositions, HorizontalCounts, VerticalCounts).
+    Submarines = [],
+    MidPos = [],
+    LeftStartPos = [],
+    RightEndPos = [],
+    BottomStartPos = [],
+    TopEndPos = [],
+    solve_battleships(10/10, WaterBlocks, Submarines, MidPos, LeftStartPos, BottomStartPos, RightEndPos, TopEndPos, HorizontalCounts, VerticalCounts).
