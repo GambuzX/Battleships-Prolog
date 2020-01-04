@@ -813,7 +813,7 @@ solve_battleships(Rows/Columns, WaterBlocksL, SubmarinesL, MidPosL, LeftPosL, Bo
         fail
     ).
 
-solve_battleships(_, _, _, _, _, _) :-
+solve_battleships(_, _, _, _, _, _, _, _, _, _) :-
     write('No new solutions were found for the problem!'), nl, nl, !.
  
 
