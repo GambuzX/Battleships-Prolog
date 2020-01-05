@@ -92,11 +92,13 @@ choose_menu_option(3).
 
     % read number of ships
     read_num_ships(NumShips),
-
-    write('Placing ships in the board...'), nl ,
+    
+    write('Placing ships in the board...'), nl,
     
     % generate board with all the ships
-    generate_board(NumRows, NumColumns, NumShips, Board),
+    reset_timer,
+    repeat,
+        generate_board(NumRows, NumColumns, NumShips, Board), !,
 
     % count values in the rows
     length(RowValues, NumRows),
@@ -114,7 +116,7 @@ choose_menu_option(3).
     display_board(NewBoard, NumRows/NumColumns, RowValues, ColumnValues),
     
     % write the board to the file
-    write(FilePath, 15, NumRows/NumColumns, NewBoard, RowValues, ColumnValues), !.
+    write(FilePath, NumShips, NumRows/NumColumns, NewBoard, RowValues, ColumnValues), !.
 
 generate_board_option.
 
@@ -384,8 +386,11 @@ generate_board(Rows, Columns, NShips, Board) :-
 
     append([ShipsShapes, X_Coords, Y_Coords], AllVars),
 
-    reset_timer,
-    labeling([ffc, value(select_random)], AllVars), 
+    labeling([ffc, value(select_random), time_out(5000, Flag)], AllVars),
+    (
+        Flag \= time_out;
+        write('5 seconds timeout, trying again...'), nl, fail
+    ), !,
 
     nl, write('Statistics:'), nl,
     fd_statistics,
