@@ -1,0 +1,5 @@
+10.
+10/10.
+[[e,e,e,e,e,e,e,e,e,e],[e,e,e,e,e,e,e,e,e,e],[e,e,e,e,e,e,e,e,e,e],[e,e,e,e,e,e,e,e,e,e],[e,e,e,e,e,e,e,e,e,e],[e,e,e,e,e,e,e,e,e,e],[e,e,e,e,e,e,e,e,e,e],[e,e,e,e,e,e,e,e,e,e],[e,e,e,e,e,e,e,e,e,e],[e,e,e,e,e,e,e,e,e,e]].
+[2,2,0,4,1,4,0,4,0,3].
+[0,1,2,1,1,1,5,3,4,2].
