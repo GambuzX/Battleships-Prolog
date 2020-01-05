@@ -129,24 +129,36 @@ generate_board_option.
  */
 create_new_board(Board, NumRows, NumColumns, NewBoard) :-
     reverse(Board, RevBoard),
-    
-    % get blocks with an e
-    get_empty_blocks(RevBoard, EmptyBlocks),
 
-    % select water blocks
-    select_random_water_blocks(EmptyBlocks, WaterBlocks),
+    % get all types of blocks to separate lists
+    get_blocks(RevBoard, e, NumRows, EmptyBlocks),
+    get_blocks(RevBoard, s, NumRows, SubmarineBlocks),
+    get_blocks(RevBoard, m, NumRows, MiddleBlocks),
+    get_blocks(RevBoard, l, NumRows, LeftBlocks),
+    get_blocks(RevBoard, b, NumRows, BottomBlocks),
+    get_blocks(RevBoard, r, NumRows, RightBlocks),
+    get_blocks(RevBoard, t, NumRows, TopBlocks),
 
-    % get blocks with an s
-    get_ship_blocks(RevBoard, ShipBlocks),
-    
-    % select required blocks
-    select_random_ship_blocks(ShipBlocks, SelectedShipBlocks),
+    % ask for hints of all types
+    select_random_blocks(EmptyBlocks, 'water', WaterBlocks),
+    select_random_blocks(SubmarineBlocks, 'hints for submarines', SelectedSubmarineBlocks),
+    select_random_blocks(MiddleBlocks, 'hints for middle of ships', SelectedMiddleBlocks),
+    select_random_blocks(LeftBlocks, 'hints for left edge of ships', SelectedLeftBlocks),
+    select_random_blocks(BottomBlocks, 'hints for bottom edge of ships', SelectedBottomBlocks),
+    select_random_blocks(RightBlocks, 'hints for right edge of ships', SelectedRightBlocks),
+    select_random_blocks(TopBlocks, 'hints for top edge of ships', SelectedTopBlocks),
 
     length(NewBoard, NumRows),
     assign_rows_length(NewBoard, NumColumns),
-   
-    draw_blocks_in_board(NewBoard, SelectedShipBlocks, s),
+    
+    % draw all blocks in new board
     draw_blocks_in_board(NewBoard, WaterBlocks, w),
+    draw_blocks_in_board(NewBoard, SelectedSubmarineBlocks, s),
+    draw_blocks_in_board(NewBoard, SelectedMiddleBlocks, m),
+    draw_blocks_in_board(NewBoard, SelectedLeftBlocks, l),
+    draw_blocks_in_board(NewBoard, SelectedBottomBlocks, b),
+    draw_blocks_in_board(NewBoard, SelectedRightBlocks, r),
+    draw_blocks_in_board(NewBoard, SelectedTopBlocks, t),
    
     fill_missing(NewBoard), !.
 
@@ -160,17 +172,6 @@ create_new_board(Board, NumRows, NumColumns, NewBoard) :-
  */
 select_random_water_blocks(Blocks, WaterBlocks) :-
     select_random_blocks(Blocks, 'water', WaterBlocks), !.
-
-/**
- * Select Random Ship Blocks
- * select_random_ship_blocks(+Blocks, -ShipBlocks)
- * Selects random ship blocks
- *
- * Blocks -> Initial blocks
- * ShipBlocks -> Selected ship blocks
- */
-select_random_ship_blocks(Blocks, ShipBlocks) :-
-    select_random_blocks(Blocks, 'ship', ShipBlocks), !.
 
 /**
  * Select Random Blocks
@@ -216,6 +217,20 @@ select_blocks(Blocks, NumBlocks, NewBlocks) :-
     append([Block], OtherNewBlocks, NewBlocks), !.
 
 /** 
+ * Is ship block
+ * is_ship_block(+Symbol)
+ * Signals the blocks that represent ships.
+ * 
+ * Symbol -> symbol of the block.
+ */
+is_ship_block(s).
+is_ship_block(m).
+is_ship_block(l).
+is_ship_block(b).
+is_ship_block(r).
+is_ship_block(t).
+
+/** 
  * Get Row Values
  * get_row_values(+Board, ?RowValues)
  * Gets a list with the row values
@@ -240,12 +255,12 @@ get_row_values([Row|OtherRows], [RowValues|OtherRowsValues]) :-
 count_row_parts([], 0) :- !.
 
 count_row_parts([Elem|Row], Value) :-
-    Elem = s,
+    is_ship_block(Elem),
     count_row_parts(Row, NewValue),
     Value is NewValue + 1, !.
 
 count_row_parts([Elem|Row], Value) :-
-    Elem \= s,
+    \+ is_ship_block(Elem),
     count_row_parts(Row, Value), !.
 
 /** 
@@ -276,7 +291,8 @@ get_column_values(Board, ColNumber, [ColVal|OtherColValues]) :-
 count_column_parts([], _, 0) :- !.
 
 count_column_parts([Row|OtherRows], ColNum, ColVal) :-
-    nth1(ColNum, Row, s),
+    nth1(ColNum, Row, Curr),
+    is_ship_block(Curr),
     count_column_parts(OtherRows, ColNum, NextColVal),
     ColVal is NextColVal + 1, !.
 
@@ -494,10 +510,10 @@ get_battleships_board(FileName) :-
     get_blocks(Board, s, NumRows, SubmarineBlocks),
     get_blocks(Board, m, NumRows, MiddleBlocks),
     get_blocks(Board, l, NumRows, LeftBlocks),
-    get_blocks(Board, b, NumRows, BottomBlocs),
-    get_blocks(Board, r, NumRows, RightBloks),
+    get_blocks(Board, b, NumRows, BottomBlocks),
+    get_blocks(Board, r, NumRows, RightBlocks),
     get_blocks(Board, t, NumRows, TopBlocks),
-    solve_battleships(Row/Column, WaterBlocks, SubmarineBlocks, MiddleBlocks, LeftBlocks, BottomBlocs, RightBloks, TopBlocks, RowVal, ColVal).
+    solve_battleships(Row/Column, WaterBlocks, SubmarineBlocks, MiddleBlocks, LeftBlocks, BottomBlocks, RightBlocks, TopBlocks, RowVal, ColVal).
    
 
 /**
@@ -511,18 +527,6 @@ get_battleships_board(FileName) :-
 get_water_blocks(Board, WaterBlocks) :-
     length(Board, NumRows),
     get_blocks(Board, w, NumRows, WaterBlocks), !.
-
-/**
- * Get Ship Blocks
- * get_ship_blocks(+Board, -ShipBlocks)
- * Gets the ship blocks
- * 
- * Board -> Puzzle board
- * ShipBlocks -> List with the positions of the ship blocks 
- */
-get_ship_blocks(Board, ShipBlocks) :-
-    length(Board, NumRows),
-    get_blocks(Board, s, NumRows, ShipBlocks), !.
 
 /**
  * Get Empty Blocks
@@ -1036,44 +1040,58 @@ draw_ships(Board, [object(_, ShapeID, [X, Y]) | Rest], Shapes) :-
     get_shape(ShapeID, Shapes, Shape),
     sbox(_, _, [Sx, Sy]) = Shape,
     (
-        Sx = 1, draw_ship_vertical(Board, X/Y, Sy);
-        Sy = 1, draw_ship_horizontal(Board, X/Y, Sx)
+        Sx = 1, draw_ship_vertical(Board, X/Y, Sy, Sy);
+        Sy = 1, draw_ship_horizontal(Board, X/Y, Sx, Sx)
     ), !,
     draw_ships(Board, Rest, Shapes).
 
 /**
  * Draw ship vertical
- * draw_ship_vertical(+Board, +Position, +Height)
+ * draw_ship_vertical(+Board, +Position, +Height, +Iter)
  * Draws the ship at position Position on the board, vertically, with given height.
  *
  * Board -> List of lists that represents the board.
  * Position -> X/Y coordinates of ship.
  * Height -> Vertical size of ship.
+ * Iter -> Iterator over the rows.
  */
-draw_ship_vertical(_, _, 0) :- !.
-draw_ship_vertical(Board, X/Y, Height) :-
+draw_ship_vertical(_, _, _, 0) :- !.
+draw_ship_vertical(Board, X/Y, Height, Iter) :-
+    (
+        Height = 1, Symbol = s; % submarine
+        Iter = Height, Symbol = b; % bottom start position
+        Iter = 1, Symbol = t; % top end position
+        Symbol = m % middle position
+    ), !,
     nth1(Y, Board, Row),
-    nth1(X, Row, s),
+    nth1(X, Row, Symbol),
     NextY is Y+1,
-    NextHeight is Height-1,
-    draw_ship_vertical(Board, X/NextY, NextHeight).
+    NextIter is Iter-1,
+    draw_ship_vertical(Board, X/NextY, Height, NextIter).
 
 /**
  * Draw ship horizontal
- * draw_ship_horizontal(+Board, +Position, +Width)
+ * draw_ship_horizontal(+Board, +Position, +Width, +Iter)
  * Draws the ship at position Position on the board, horizontally, with given width.
  *
  * Board -> List of lists that represents the board.
  * Position -> X/Y coordinates of ship.
  * Width -> Horizontal size of ship.
+ * Iter -> Iterator over the columns.
  */
-draw_ship_horizontal(_, _, 0) :- !.
-draw_ship_horizontal(Board, X/Y, Width) :-
+draw_ship_horizontal(_, _, _, 0) :- !.
+draw_ship_horizontal(Board, X/Y, Width, Iter) :-
+    (
+        Width = 1, Symbol = s; % submarine
+        Iter = Width, Symbol = l; % bottom start position
+        Iter = 1, Symbol = r; % top end position
+        Symbol = m % middle position
+    ), !,
     nth1(Y, Board, Row),
-    nth1(X, Row, s),
+    nth1(X, Row, Symbol),
     NextX is X+1,
-    NextWidth is Width-1,
-    draw_ship_horizontal(Board, NextX/Y, NextWidth).
+    NextIter is Iter-1,
+    draw_ship_horizontal(Board, NextX/Y, Width, NextIter).
 
 /**
  * Draw blocks in board

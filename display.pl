@@ -225,14 +225,44 @@ display_character(e) :-
 
 display_character(s) :-
     write(' '),
-    %write('█').
-    put_code(219),
+    %write('O').
+    put_code(79),
     write(' ').
 
 display_character(w) :-
-    write(' '),
     %write('░').
     put_code(176),
+    put_code(176),
+    put_code(176).
+
+display_character(m) :-
+    %write('█').
+    put_code(219),
+    put_code(219),
+    put_code(219).
+
+display_character(l) :-
+    write(' '),
+    %write('<').
+    put_code(60),
+    write(' ').
+
+display_character(b) :-
+    write(' '),
+    %write('V').
+    put_code(86),
+    write(' ').
+
+display_character(r) :-
+    write(' '),
+    %write('>').
+    put_code(62),
+    write(' ').
+
+display_character(t) :-
+    write(' '),
+    %write('^').
+    put_code(94),
     write(' ').
 
 /**
