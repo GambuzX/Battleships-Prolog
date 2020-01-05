@@ -387,7 +387,8 @@ generate_board(Rows, Columns, NShips, Board) :-
     reset_timer,
     labeling([ffc, value(select_random)], AllVars), 
 
-    % display time it took to generate the board
+    nl, write('Statistics:'), nl,
+    fd_statistics,
     display_time,
     
     create_board(Rows/Columns, Ships, Shapes, [], Board).
@@ -780,6 +781,9 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, SubmarinesL, MidPosL, Left
     append([ShipsShapes, X_Coords, Y_Coords], AllVars),
     reset_timer, 
     labeling([ffc, median], AllVars),
+    
+    nl, write('Statistics:'), nl,
+    fd_statistics,
     display_time,
 
     create_board(Rows/Columns, Ships, Shapes, WaterBlocksL, FinalBoard),
