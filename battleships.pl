@@ -106,9 +106,6 @@ choose_menu_option(3).
     % create new board
     create_new_board(Board, NumRows, NumColumns, NewBoard),
 
-    % display time it took to generate the board
-    display_time,
-
     % display the generated board
     display_board(NewBoard, NumRows/NumColumns, RowValues, ColumnValues),
     
@@ -401,6 +398,10 @@ generate_board(Rows, Columns, Board) :-
 
     reset_timer,
     labeling([ffc, value(select_random)], AllVars), 
+
+    % display time it took to generate the board
+    display_time,
+    
     create_board(Rows/Columns, Ships, Shapes, [], Board).
 
 /** 
