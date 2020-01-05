@@ -382,7 +382,7 @@ generate_board(Rows, Columns, Board) :-
     append([ShipsShapes, X_Coords, Y_Coords], AllVars),
 
     reset_timer,
-    labeling([ffc, median], AllVars), 
+    labeling([ffc, value(select_random)], AllVars), 
     create_board(Rows/Columns, Ships, Shapes, [], Board).
 
 /** 
