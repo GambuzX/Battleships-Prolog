@@ -93,7 +93,7 @@ choose_menu_option(3).
     write('Placing ships in the board...'), nl ,
     
     % generate board with all the ships
-    generate_board(NumRows, NumColumns, 6, Board),
+    generate_board(NumRows, NumColumns, 15, Board),
 
     % count values in the rows
     length(RowValues, NumRows),
@@ -111,7 +111,7 @@ choose_menu_option(3).
     display_board(NewBoard, NumRows/NumColumns, RowValues, ColumnValues),
     
     % write the board to the file
-    write(FilePath, 6, NumRows/NumColumns, NewBoard, RowValues, ColumnValues), !.
+    write(FilePath, 15, NumRows/NumColumns, NewBoard, RowValues, ColumnValues), !.
 
 generate_board_option.
 
