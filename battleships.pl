@@ -88,6 +88,8 @@ choose_menu_option(3).
     
     % read the board size
     read_board_size(NumRows, NumColumns),
+
+    write('Placing ships in the board...'), nl ,
     
     % generate board with all the ships
     generate_board(NumRows, NumColumns, Board),
@@ -143,8 +145,8 @@ create_new_board(Board, NumRows, NumColumns, NewBoard) :-
     length(NewBoard, NumRows),
     assign_rows_length(NewBoard, NumColumns),
    
-    draw_required_ship_blocks(NewBoard, SelectedShipBlocks),
-    draw_water_blocks(NewBoard, WaterBlocks),
+    draw_blocks_in_board(NewBoard, SelectedShipBlocks, s),
+    draw_blocks_in_board(NewBoard, WaterBlocks, w),
    
     fill_missing(NewBoard), !.
 
@@ -985,7 +987,7 @@ create_board(Rows/Cols, Ships, Shapes, WaterBlocks, NewBoard) :-
     length(Board, Rows),
     assign_rows_length(Board, Cols),
     draw_ships(Board, Ships, Shapes),
-    draw_water_blocks(Board, WaterBlocks),
+    draw_blocks_in_board(Board, WaterBlocks, w),
     fill_missing(Board),
     reverse(Board, NewBoard).
 
@@ -1074,32 +1076,20 @@ draw_ship_horizontal(Board, X/Y, Width) :-
     draw_ship_horizontal(Board, NextX/Y, NextWidth).
 
 /**
- * Draw water blocks
- * draw_water_blocks(+Board, +WaterBlocks)
- * Draws the given water blocks on the board, with a 'w'.
+ * Draw blocks in board
+ * draw_blocks_in_board(+Board, +Positions, +Symbol)
+ * Draws the given symbol in the given positions in the board.
  *
  * Board -> List of lists that represents the board.
- * WaterBlocks -> List of positions of water blocks, in format X/Y.
+ * Positions -> List of positions in format X/Y.
+ * Symbol -> Symbol to draw.
  */
-draw_water_blocks(_, []) :- !.
-draw_water_blocks(Board, [X/Y | Rest]) :-
+draw_blocks_in_board(_, [], _) :- !.
+draw_blocks_in_board(Board, [X/Y | Rest], Symbol) :-
     nth1(Y, Board, Row),
-    nth1(X, Row, w),
-    draw_water_blocks(Board, Rest).
+    nth1(X, Row, Symbol),
+    draw_blocks_in_board(Board, Rest, Symbol).
 
-/**
- * Draw required ship blocks
- * draw_required_ship_blocks(+Board, +RequiredPositions)
- * Draws positions that must have a ship on the board, with an 's'.
- *
- * Board -> List of lists that represents the board.
- * RequiredPositions -> List of positions in format X/Y.
- */
-draw_required_ship_blocks(_, []) :- !.
-draw_required_ship_blocks(Board, [X/Y | Rest]) :-
-    nth1(Y, Board, Row),
-    nth1(X, Row, s),
-    draw_required_ship_blocks(Board, Rest).
 
 /**
  * Fill missing
