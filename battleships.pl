@@ -93,7 +93,7 @@ choose_menu_option(3).
     write('Placing ships in the board...'), nl ,
     
     % generate board with all the ships
-    generate_board(NumRows, NumColumns, Board),
+    generate_board(NumRows, NumColumns, 6, Board),
 
     % count values in the rows
     length(RowValues, NumRows),
@@ -111,7 +111,7 @@ choose_menu_option(3).
     display_board(NewBoard, NumRows/NumColumns, RowValues, ColumnValues),
     
     % write the board to the file
-    write(FilePath, NumRows/NumColumns, NewBoard, RowValues, ColumnValues), !.
+    write(FilePath, 6, NumRows/NumColumns, NewBoard, RowValues, ColumnValues), !.
 
 generate_board_option.
 
@@ -299,41 +299,25 @@ count_column_parts([_|OtherRows], ColNum, ColVal) :-
 
 /**
  * Generate Board
- * generate_board(+Rows, +Columns, -Board)
+ * generate_board(+Rows, +Columns, +NShips, -Board)
  * Generates a board with given dimensions, placing the 10 ship fleet.
  *
  * Rows -> Number of board rows
  * Columns -> Number of board columns
+ * NShips -> Number of ships to be placed
  * Board -> Resulting board
  */
-generate_board(Rows, Columns, Board) :-
-    % domain variables
-    ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
-    X_Coords = [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10],
-    Y_Coords = [Y1, Y2, Y3, Y4, Y5, Y6, Y7, Y8, Y9, Y10],
+generate_board(Rows, Columns, NShips, Board) :-
+
+    % gets the ship fleet depending on number of ships
+    get_ship_fleet(NShips, ShipsShapes, X_Coords, Y_Coords, LexGroups),
 
     % 1 indexed!!!!
     domain(X_Coords, 1, Columns),
     domain(Y_Coords, 1, Rows),
 
-    domain([S1, S2, S3, S4], 1, 1),
-    domain([S5, S6, S7], 2, 3),
-    domain([S8, S9], 4, 5),
-    domain([S10], 6, 7),
-
-    % representation of the ships for geost
-    Ships = [
-        object(1, S1, [X1, Y1]),
-        object(2, S2, [X2, Y2]),
-        object(3, S3, [X3, Y3]),
-        object(4, S4, [X4, Y4]),
-        object(5, S5, [X5, Y5]),
-        object(6, S6, [X6, Y6]),
-        object(7, S7, [X7, Y7]),
-        object(8, S8, [X8, Y8]),
-        object(9, S9, [X9, Y9]),
-        object(10, S10, [X10, Y10])
-    ],
+    % initializes the list Ships
+    createShipsList(0, X_Coords, Y_Coords, ShipsShapes, Ships, _),
 
     % collect IDs of objects to use in geost Rules
     getObjectsIDs(Ships, ShipsIDs),
@@ -346,21 +330,21 @@ generate_board(Rows, Columns, Board) :-
         sbox(4, [0,0], [1, 3]),
         sbox(5, [0,0], [3, 1]),
         sbox(6, [0,0], [1, 4]),
-        sbox(7, [0,0], [4, 1])
+        sbox(7, [0,0], [4, 1]),
+        sbox(8, [0,0], [1, 5]),
+        sbox(9, [0,0], [5, 1])
     ],
 
-    Options = [      
+    BaseOptions = [
         /*
             lift constraint in geost that objects should be non-overlapping.
             that behaviour will be handled by the Rules.
         */
-        overlap(true),
-          
-        % eliminate symmetries in answers
-        lex([1,2,3,4]),
-        lex([5,6,7]),
-        lex([8,9])
+        overlap(true)
     ],
+
+    % eliminate symmetries in answers
+    addLexOptions(BaseOptions, LexGroups, Options),
 
     Rules = [ 
         /* sum of origin value with shape offset in dimension D*/
@@ -505,7 +489,7 @@ choose_board(_) :-
  * FileName -> Absolute path to the file
  */
 get_battleships_board(FileName) :-
-    read(FileName, Row/Column, Board, RowVal, ColVal),
+    read(FileName, NShips, Row/Column, Board, RowVal, ColVal),
     display_board(Board, Row/Column, RowVal, ColVal),
     length(Board, NumRows),
     get_blocks(Board, w, NumRows, WaterBlocks),
@@ -515,8 +499,8 @@ get_battleships_board(FileName) :-
     get_blocks(Board, b, NumRows, BottomBlocks),
     get_blocks(Board, r, NumRows, RightBlocks),
     get_blocks(Board, t, NumRows, TopBlocks),
-    solve_battleships(Row/Column, 10, WaterBlocks, SubmarineBlocks, MiddleBlocks, LeftBlocks, BottomBlocks, RightBlocks, TopBlocks, RowVal, ColVal).
-   
+    solve_battleships(Row/Column, NShips, WaterBlocks, SubmarineBlocks, MiddleBlocks, LeftBlocks, BottomBlocks, RightBlocks, TopBlocks, RowVal, ColVal).
+   % TODO CHANGE NShips
 
 /**
  * Get Water Blocks
