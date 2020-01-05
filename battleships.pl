@@ -104,6 +104,9 @@ choose_menu_option(3).
     % create new board
     create_new_board(Board, NumRows, NumColumns, NewBoard),
 
+    % display time it took to generate the board
+    display_time,
+
     % display the generated board
     display_board(NewBoard, NumRows/NumColumns, RowValues, ColumnValues),
     
@@ -363,7 +366,7 @@ generate_board(Rows, Columns, Board) :-
 
         % guarantee the whole ship fits inside the board
         (forall(Ship, objects(ShipsIDs),
-            forall(Shape, sboxes([Obj^sid]),
+            forall(Shape, sboxes([Ship^sid]),
                 end(Ship, Shape, 1) #=< Columns + 1 #/\ % +1 because 'end' calculates ship edge, not position
                 end(Ship, Shape, 2) #=< Rows + 1))),
                 
@@ -379,8 +382,7 @@ generate_board(Rows, Columns, Board) :-
     append([ShipsShapes, X_Coords, Y_Coords], AllVars),
 
     reset_timer,
-    labeling([ffc, value(select_random)], AllVars), 
-    display_time,
+    labeling([ffc, median], AllVars), 
     create_board(Rows/Columns, Ships, Shapes, [], Board).
 
 /** 
@@ -394,6 +396,9 @@ select_random(Var, Rest, BB0, BB1):-
         first_bound(BB0, BB1), Var #= Value ;
         later_bound(BB0, BB1), Var #\= Value 
     ).
+
+selRandom(ListOfVars, Var, Rest) :-
+    random_select(Var, ListOfVars, Rest). 
 
 /**
  * Add files directory and .txt extension
