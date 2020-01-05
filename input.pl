@@ -60,7 +60,7 @@ read_board_size(NumRows, NumColumns) :-
     repeat,
         (
             write('Insert the board size in the format \'NumberRows/NumberColumns\'.'), nl,
-            write('(Both numbers must be greater than 6 and the tuple should end with a \'.\''), nl,
+            write('(Both numbers must be greater than 6 and the tuple should end with a \'.\')'), nl,
             read(NumRows/NumColumns), 
             NumRows >= 7,
             NumColumns >= 7, 
@@ -69,3 +69,23 @@ read_board_size(NumRows, NumColumns) :-
 
             error_msg('Invalid size!')
         ).    
+
+/**
+ * Read Number of Ships
+ * read_num_ships(-NumShips)
+ * Reads the number of ships
+ *
+ * NumShips -> Number of ships
+ */
+read_num_ships(NumShips) :-
+    repeat,
+        (
+            write('Insert the number of ships'), nl,
+            write('(must be in range [6, 15] and should end with a \'.\')'), nl,
+            read(NumShips),
+            NumShips >= 6,
+            NumShips =< 15,
+            get_code(_), !;
+
+            error_msg('Invalid number of ships!')
+        ).

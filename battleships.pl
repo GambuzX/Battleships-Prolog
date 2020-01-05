@@ -90,10 +90,13 @@ choose_menu_option(3).
     % read the board size
     read_board_size(NumRows, NumColumns),
 
+    % read number of ships
+    read_num_ships(NumShips),
+
     write('Placing ships in the board...'), nl ,
     
     % generate board with all the ships
-    generate_board(NumRows, NumColumns, 15, Board),
+    generate_board(NumRows, NumColumns, NumShips, Board),
 
     % count values in the rows
     length(RowValues, NumRows),
@@ -500,7 +503,7 @@ get_battleships_board(FileName) :-
     get_blocks(Board, r, NumRows, RightBlocks),
     get_blocks(Board, t, NumRows, TopBlocks),
     solve_battleships(Row/Column, NShips, WaterBlocks, SubmarineBlocks, MiddleBlocks, LeftBlocks, BottomBlocks, RightBlocks, TopBlocks, RowVal, ColVal).
-   % TODO CHANGE NShips
+
 
 /**
  * Get Water Blocks
@@ -775,7 +778,6 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, SubmarinesL, MidPosL, Left
     force_vertical_ships_counts(1, VerticalCounts, Ships),
 
     append([ShipsShapes, X_Coords, Y_Coords], AllVars),
-    
     reset_timer, 
     labeling([ffc, median], AllVars),
     display_time,
@@ -793,7 +795,7 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, SubmarinesL, MidPosL, Left
         fail
     ).
 
-solve_battleships(_, _, _, _, _, _, _, _, _, _) :-
+solve_battleships(_, _, _, _, _, _, _, _, _, _, _) :-
     write('No new solutions were found for the problem!'), nl, nl, !.
 
 /**
@@ -886,7 +888,9 @@ apply_shape_size_restrictions(ShapeID, Width, Height) :-
     (ShapeID #= 4 #/\ Width #= 1 #/\ Height #= 3) #\/
     (ShapeID #= 5 #/\ Width #= 3 #/\ Height #= 1) #\/
     (ShapeID #= 6 #/\ Width #= 1 #/\ Height #= 4) #\/
-    (ShapeID #= 7 #/\ Width #= 4 #/\ Height #= 1).
+    (ShapeID #= 7 #/\ Width #= 4 #/\ Height #= 1) #\/
+    (ShapeID #= 8 #/\ Width #= 1 #/\ Height #= 5) #\/
+    (ShapeID #= 9 #/\ Width #= 5 #/\ Height #= 1).
 
 /**
  * Count ships in row
