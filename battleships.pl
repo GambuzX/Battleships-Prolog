@@ -5,6 +5,7 @@
 :- include('display.pl').
 :- include('input.pl').
 :- include('files.pl').
+:- include('ship_fleet.pl').
 
 /**
  * Battleships
@@ -514,7 +515,7 @@ get_battleships_board(FileName) :-
     get_blocks(Board, b, NumRows, BottomBlocks),
     get_blocks(Board, r, NumRows, RightBlocks),
     get_blocks(Board, t, NumRows, TopBlocks),
-    solve_battleships(Row/Column, WaterBlocks, SubmarineBlocks, MiddleBlocks, LeftBlocks, BottomBlocks, RightBlocks, TopBlocks, RowVal, ColVal).
+    solve_battleships(Row/Column, 10, WaterBlocks, SubmarineBlocks, MiddleBlocks, LeftBlocks, BottomBlocks, RightBlocks, TopBlocks, RowVal, ColVal).
    
 
 /**
@@ -586,11 +587,12 @@ get_row_blocks([Pos|OtherPos], Char, Row, Column, Blocks) :-
 
 /**
  * Solve battleships
- * solve_battleships(+Dimensions, +WaterBlocksList, +SubmarinesL, +MidPosL, +LeftPosL, +BottomPosL, +RightPosL, +TopPosL, +HorizontalCounts, +VerticalCounts)
+ * solve_battleships(+Dimensions, +NShips, +WaterBlocksList, +SubmarinesL, +MidPosL, +LeftPosL, +BottomPosL, +RightPosL, +TopPosL, +HorizontalCounts, +VerticalCounts)
  * Solves a battleships problem, given the provided input values.
  * Finds the position of all the ships in the board.
  *
  * Dimensions -> Size of the board, in format Rows/Columns
+ * NShips -> Number of ships to be considered.
  * WaterBlocksList -> List of positions X/Y of Water blocks in the board
  * SubmarinesL -> Positions of required submarines, 1x1 ships
  * MidPosL -> Positions that must be the middle of a ship
@@ -601,35 +603,18 @@ get_row_blocks([Pos|OtherPos], Char, Row, Column, Blocks) :-
  * HorizontalCounts -> List with the number of ship segments that must appear in each row
  * VerticalCounts -> List with the number of ship segments that must appear in each col
  */
-solve_battleships(Rows/Columns, WaterBlocksL, SubmarinesL, MidPosL, LeftPosL, BottomPosL, RightPosL, TopPosL, HorizontalCounts, VerticalCounts) :-
-    % Domain variables
-    ShipsShapes = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10],
-    X_Coords = [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10],
-    Y_Coords = [Y1, Y2, Y3, Y4, Y5, Y6, Y7, Y8, Y9, Y10],
+solve_battleships(Rows/Columns, NShips, WaterBlocksL, SubmarinesL, MidPosL, LeftPosL, BottomPosL, RightPosL, TopPosL, HorizontalCounts, VerticalCounts) :-
+    
+    % gets the ship fleet depending on number of ships
+    get_ship_fleet(NShips, ShipsShapes, X_Coords, Y_Coords, LexGroups),
 
     % 1 indexed!!!!
     domain(X_Coords, 1, Columns),
     domain(Y_Coords, 1, Rows),
 
-    domain([S1, S2, S3, S4], 1, 1),
-    domain([S5, S6, S7], 2, 3),
-    domain([S8, S9], 4, 5),
-    domain([S10], 6, 7),
+    % initializes the list Ships
+    createShipsList(0, X_Coords, Y_Coords, ShipsShapes, Ships, LastAssignedID),
 
-    % ship objects to be used in geost
-    Ships = [
-        object(1, S1, [X1, Y1]),
-        object(2, S2, [X2, Y2]),
-        object(3, S3, [X3, Y3]),
-        object(4, S4, [X4, Y4]),
-        object(5, S5, [X5, Y5]),
-        object(6, S6, [X6, Y6]),
-        object(7, S7, [X7, Y7]),
-        object(8, S8, [X8, Y8]),
-        object(9, S9, [X9, Y9]),
-        object(10, S10, [X10, Y10])
-    ],
-    LastAssignedID = 10,
     % water blocks
     createUnitaryObjects(LastAssignedID, WaterBlocksL, WaterBlocks, LastAssignedID2),
     % submarines hints
@@ -654,7 +639,7 @@ solve_battleships(Rows/Columns, WaterBlocksL, SubmarinesL, MidPosL, LeftPosL, Bo
     getObjectsIDs(RightPos, RightPosIDs),
     getObjectsIDs(TopPos, TopPosIDs),
 
-    % horizontal and vertical shapes for each ship size
+    % horizontal and vertical shapes for each ship size. depending on NShips, may go to length 5.
     Shapes = [
         sbox(1, [0,0], [1, 1]),
         sbox(2, [0,0], [1, 2]),
@@ -662,21 +647,21 @@ solve_battleships(Rows/Columns, WaterBlocksL, SubmarinesL, MidPosL, LeftPosL, Bo
         sbox(4, [0,0], [1, 3]),
         sbox(5, [0,0], [3, 1]),
         sbox(6, [0,0], [1, 4]),
-        sbox(7, [0,0], [4, 1])
+        sbox(7, [0,0], [4, 1]),
+        sbox(8, [0,0], [1, 5]),
+        sbox(9, [0,0], [5, 1])
     ],
 
-    Options = [
+    BaseOptions = [
         /*
             lift constraint in geost that objects should be non-overlapping.
             that behaviour will be handled by the Rules.
         */
-        overlap(true),
-
-        % eliminate symmetries in answers
-        lex([1,2,3,4]),
-        lex([5,6,7]),
-        lex([8,9])
+        overlap(true)
     ],
+
+    % eliminate symmetries in answers
+    addLexOptions(BaseOptions, LexGroups, Options),
 
     /*
         Geost Rules (https://web.imt-atlantique.fr/x-info/ppc/bib/pub/carlsson-al-CP-2008.pdf)
@@ -799,7 +784,6 @@ solve_battleships(Rows/Columns, WaterBlocksL, SubmarinesL, MidPosL, LeftPosL, Bo
                 isVertical(Ship) #/\ endsAt(Ship, TopEndPos))))
 
     ],
-
     geost(AllObjects, Shapes, Options, Rules),
 
     % apply restrictions of ships' segments count in rows and columns
@@ -827,7 +811,23 @@ solve_battleships(Rows/Columns, WaterBlocksL, SubmarinesL, MidPosL, LeftPosL, Bo
 
 solve_battleships(_, _, _, _, _, _, _, _, _, _) :-
     write('No new solutions were found for the problem!'), nl, nl, !.
- 
+
+/**
+ * Create Ships list
+ * createShipsList(+LastID, +X_Coords, +Y_Coords, +Ships_Shapes, -Ships, -NewLastID)
+ * Creates a list of ships from the given coords and shapes, returning the last assigned ID.
+ *
+ * LastID -> Last assigned ID.
+ * X_Coords -> X coordinates of ships' position.
+ * Y_Coords -> Y coordinates of ships' position.
+ * Ships_Shapes -> Shapes of ships to create.
+ * Ships -> List of ship objects
+ * NewLastID -> Last ID assigned, after creating all the ships.
+ */
+createShipsList(LastID, [], [], [], [], LastID).
+createShipsList(LastID, [Curr_X | Rest_X], [Curr_Y | Rest_Y], [Curr_Shape | Rest_Shapes], [object(CurrID, Curr_Shape, [Curr_X, Curr_Y]) | RestShips], NewLastID) :- 
+    CurrID is LastID+1,
+    createShipsList(CurrID, Rest_X, Rest_Y, Rest_Shapes, RestShips, NewLastID).
 
 /**
  * Create Unitary objects
@@ -855,6 +855,21 @@ createUnitaryObjects(LastID, [X/Y | PositionsL], [object(CurrID, 1, [X,Y]) | Obj
 getObjectsIDs([], []).
 getObjectsIDs([object(ID, _, _) | Rest], [ID | RestIDs]) :-
     getObjectsIDs(Rest, RestIDs).
+
+/**
+ * Add Lex options
+ * addLexOptions(+Options, +LexGroups, -NewOptions)
+ * Adds an option 'lex([...])' for each list in LexGroups
+ * to the Options List
+ *
+ * Options -> Base options.
+ * LexGroups -> List of lex groups.
+ * NewOptions -> Options after adding new options.
+ */
+addLexOptions(FinalOptions, [], FinalOptions).
+addLexOptions(Options, [CurrGroup | RestGroups], NewOptions) :-
+    append(Options, [lex(CurrGroup)], TempOptions),
+    addLexOptions(TempOptions, RestGroups, NewOptions).
 
 /**
  * Eliminate coordinates symmmetry
@@ -1148,4 +1163,4 @@ test :-
     RightEndPos = [],
     BottomStartPos = [],
     TopEndPos = [],
-    solve_battleships(10/10, WaterBlocks, Submarines, MidPos, LeftStartPos, BottomStartPos, RightEndPos, TopEndPos, HorizontalCounts, VerticalCounts).
+    solve_battleships(10/10, 10, WaterBlocks, Submarines, MidPos, LeftStartPos, BottomStartPos, RightEndPos, TopEndPos, HorizontalCounts, VerticalCounts).
