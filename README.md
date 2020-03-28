@@ -3,6 +3,7 @@ Battleships puzzle solver and generator using Constraint Programming
 
 ### Screenshots
 ![Menu](https://github.com/GambuzX/Battleships-Prolog/blob/master/screenshots/menu.png) *Menu*
+
 ![Solution](https://github.com/GambuzX/Battleships-Prolog/blob/master/screenshots/solution.png) *Solution*
 
 
