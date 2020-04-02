@@ -510,6 +510,8 @@ get_battleships_board(FileName) :-
     get_blocks(Board, t, NumRows, TopBlocks),
     solve_battleships(Row/Column, NShips, WaterBlocks, SubmarineBlocks, MiddleBlocks, LeftBlocks, BottomBlocks, RightBlocks, TopBlocks, RowVal, ColVal).
 
+get_battleships_board(FileName, NShips, Row/Column, Board, RowVal, ColVal) :-
+    read(FileName, NShips, Row/Column, Board, RowVal, ColVal).
 
 /**
  * Get Water Blocks
@@ -597,7 +599,6 @@ get_row_blocks([Pos|OtherPos], Char, Row, Column, Blocks) :-
  * VerticalCounts -> List with the number of ship segments that must appear in each col
  */
 solve_battleships(Rows/Columns, NShips, WaterBlocksL, SubmarinesL, MidPosL, LeftPosL, BottomPosL, RightPosL, TopPosL, HorizontalCounts, VerticalCounts) :-
-    
     % gets the ship fleet depending on number of ships
     get_ship_fleet(NShips, ShipsShapes, X_Coords, Y_Coords, LexGroups),
 
@@ -806,6 +807,222 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, SubmarinesL, MidPosL, Left
 
 solve_battleships(_, _, _, _, _, _, _, _, _, _, _) :-
     write('No new solutions were found for the problem!'), nl, nl, !.
+
+/**
+ * Solve battleships
+ * solve_battleships(+Dimensions, +NShips, +WaterBlocksList, +SubmarinesL, +MidPosL, +LeftPosL, +BottomPosL, +RightPosL, +TopPosL, +HorizontalCounts, +VerticalCounts, +VariableSelection, +ValueSelection, -Time)
+ * Solves a battleships problem, given the provided input values.
+ * Finds the position of all the ships in the board.
+ *
+ * Dimensions -> Size of the board, in format Rows/Columns
+ * NShips -> Number of ships to be considered.
+ * WaterBlocksList -> List of positions X/Y of Water blocks in the board
+ * SubmarinesL -> Positions of required submarines, 1x1 ships
+ * MidPosL -> Positions that must be the middle of a ship
+ * LeftPosL -> Positions that must be the start of a horizontal ship
+ * BottomPosL -> Positions that must be the start of a vertical ship
+ * RightPosL -> Positions that must be the end of a horizontal ship
+ * TopPosL -> Positions that must be the start of a vertical ship
+ * HorizontalCounts -> List with the number of ship segments that must appear in each row
+ * VerticalCounts -> List with the number of ship segments that must appear in each col
+ * VariableSelection -> Variable selection option for labeling
+ * ValueSelection -> Value selection option for labeling 
+ * OrderdSelection -> Order selection option for labeling
+ * Time -> Labeling time
+ */
+
+solve_battleships(Rows/Columns, NShips, WaterBlocksL, SubmarinesL, MidPosL, LeftPosL, BottomPosL, RightPosL, TopPosL, HorizontalCounts, VerticalCounts, VariableSelection, ValueSelection, OrderSelection, Time) :-
+    % gets the ship fleet depending on number of ships
+    get_ship_fleet(NShips, ShipsShapes, X_Coords, Y_Coords, LexGroups),
+
+    % 1 indexed!!!!
+    domain(X_Coords, 1, Columns),
+    domain(Y_Coords, 1, Rows),
+
+    % initializes the list Ships
+    createShipsList(0, X_Coords, Y_Coords, ShipsShapes, Ships, LastAssignedID),
+
+    % water blocks
+    createUnitaryObjects(LastAssignedID, WaterBlocksL, WaterBlocks, LastAssignedID2),
+    % submarines hints
+    createUnitaryObjects(LastAssignedID2, SubmarinesL, SubmarinesPos, LastAssignedID3),
+    % ships' segments hints
+    createUnitaryObjects(LastAssignedID3, MidPosL, MidPos, LastAssignedID4),
+    createUnitaryObjects(LastAssignedID4, LeftPosL, LeftPos, LastAssignedID5),
+    createUnitaryObjects(LastAssignedID5, BottomPosL, BottomPos, LastAssignedID6),
+    createUnitaryObjects(LastAssignedID6, RightPosL, RightPos, LastAssignedID7),
+    createUnitaryObjects(LastAssignedID7, TopPosL, TopPos, _),
+
+    % join all objects in a single list for geost
+    append([Ships, WaterBlocks, SubmarinesPos, MidPos, LeftPos, BottomPos, RightPos, TopPos], AllObjects),
+
+    % collect IDs of objects to use in geost Rules
+    getObjectsIDs(Ships, ShipsIDs),
+    getObjectsIDs(WaterBlocks, WaterBlocksIDs),
+    getObjectsIDs(SubmarinesPos, SubmarinesPosIDs),
+    getObjectsIDs(MidPos, MidPosIDs),
+    getObjectsIDs(LeftPos, LeftPosIDs),
+    getObjectsIDs(BottomPos, BottomPosIDs),
+    getObjectsIDs(RightPos, RightPosIDs),
+    getObjectsIDs(TopPos, TopPosIDs),
+
+    % horizontal and vertical shapes for each ship size. depending on NShips, may go to length 5.
+    Shapes = [
+        sbox(1, [0,0], [1, 1]),
+        sbox(2, [0,0], [1, 2]),
+        sbox(3, [0,0], [2, 1]),
+        sbox(4, [0,0], [1, 3]),
+        sbox(5, [0,0], [3, 1]),
+        sbox(6, [0,0], [1, 4]),
+        sbox(7, [0,0], [4, 1]),
+        sbox(8, [0,0], [1, 5]),
+        sbox(9, [0,0], [5, 1])
+    ],
+
+    BaseOptions = [
+        /*
+            lift constraint in geost that objects should be non-overlapping.
+            that behaviour will be handled by the Rules.
+        */
+        overlap(true)
+    ],
+
+    % eliminate symmetries in answers
+    addLexOptions(BaseOptions, LexGroups, Options),
+
+    /*
+        Geost Rules (https://web.imt-atlantique.fr/x-info/ppc/bib/pub/carlsson-al-CP-2008.pdf)
+
+        k is the dimension, in this case 2.
+        Below, d means the dimension to extract value.
+
+        Shapes' properties (integers):
+            - s.sid : shape id
+            - s.t[d] : shift offset (1 <= d <= k)
+            - s.l[d] : sizes (s.l[d] > 0 and 1 <= d <= k)
+
+        Objects' properties:
+            - o.oid : unique object id (integer)
+            - o.sid : shape id (integer if fixed shape, or domain variable for polymorphic objects)
+            - o.x[d] : origin (1 <= d <= k)
+    */
+    Rules = [ 
+        /* sum of origin value with shape offset in dimension D*/
+        (origin(Obj, Shape, Dim) ---> Obj^x(Dim) + Shape^t(Dim)),
+
+        /* sum of origin value with shape offset and size in dimension D */
+        (end(Obj, Shape, Dim) ---> Obj^x(Dim) + Shape^t(Dim) + Shape^l(Dim)),
+
+        (tooclose(Obj1, Obj2, Shape1, Shape2, Dist, Dim) --->
+            end(Obj1, Shape1, Dim) + Dist #> origin(Obj2, Shape2, Dim) #/\
+            end(Obj2, Shape2, Dim) + Dist #> origin(Obj1, Shape1, Dim)),
+
+        % assure objects O1 and O2 are apart, by at least Dist units
+        (apart(Obj1, Obj2, Dist) --->
+            forall(Shape1, sboxes([Obj1^sid]), % shape boxes of object O1, could be more than 1
+                forall(Shape2, sboxes([Obj2^sid]),% shape boxes of object O2
+                    #\ tooclose(Obj1, Obj2, Shape1, Shape2, Dist, 1) #\/ % check horizontally
+                    #\ tooclose(Obj1, Obj2, Shape1, Shape2, Dist, 2)))), % check vertically
+
+        % checks if 2 objects intersect
+        (intersect(Obj1, Obj2) --->
+            #\ apart(Obj1, Obj2, 0)),
+
+        % check if a ship is a submarine, that is, 1x1
+        (isSubmarine(Ship) --->
+            forall(Shape, sboxes([Ship^sid]),
+                end(Ship, Shape, 1) #= origin(Ship, Shape, 1) + 1 #/\
+                end(Ship, Shape, 2) #= origin(Ship, Shape, 2) + 1)),
+
+        % check if a ship is horizontal, that is, height is 1 and width > 1
+        (isHorizontal(Ship) --->
+            forall(Shape, sboxes([Ship^sid]),
+                end(Ship, Shape, 1) #> origin(Ship, Shape, 1) + 1 #/\
+                end(Ship, Shape, 2) #= origin(Ship, Shape, 2) + 1)),
+
+        % check if a ship is vertical, that is, width is 1 and height > 1
+        (isVertical(Ship) --->
+            forall(Shape, sboxes([Ship^sid]),
+                end(Ship, Shape, 1) #= origin(Ship, Shape, 1) + 1 #/\
+                end(Ship, Shape, 2) #> origin(Ship, Shape, 2) + 1)),
+
+        % check if a ship starts at a given position
+        (startsAt(Ship, Position) --->
+            forall(Pos, sboxes([Position^sid]),
+                forall(Shape, sboxes([Ship^sid]),
+                    origin(Ship, Shape, 1) #= origin(Position, Pos, 1) #/\
+                    origin(Ship, Shape, 2) #= origin(Position, Pos, 2)))),
+
+        % check if a ship ends at a given position
+        (endsAt(Ship, Position) --->
+            forall(Pos, sboxes([Position^sid]),
+                forall(Shape, sboxes([Ship^sid]),
+                    end(Ship, Shape, 1) #= end(Position, Pos, 1) #/\
+                    end(Ship, Shape, 2) #= end(Position, Pos, 2)))),        
+
+        % guarantee the whole ship fits inside the board
+        (forall(Ship, objects(ShipsIDs),
+            forall(Shape, sboxes([Obj^sid]),
+                end(Ship, Shape, 1) #=< Columns + 1 #/\ % +1 because 'end' calculates ship edge, not position
+                end(Ship, Shape, 2) #=< Rows + 1))),
+
+        % check ships are apart by at least 1 unit, in all directions
+        (forall(Obj1, objects(ShipsIDs),
+            forall(Obj2, objects(ShipsIDs),
+                % if different objects, must be apart 1 unit
+                (Obj2^oid #>= Obj1^oid) #\/ apart(Obj1, Obj2, 1)))),
+
+        % verify there is not ship in water blocks
+        (forall(Obj, objects(ShipsIDs),
+            forall(WaterBlock, objects(WaterBlocksIDs),
+                % must not intersect. apart by 0 units means touching each other but not intersecting
+                apart(Obj, WaterBlock, 0)))),
+        
+        % for all required submarines positions, check they have a submarine
+        (forall(Submarine, objects(SubmarinesPosIDs),
+            exists(Ship, objects(ShipsIDs), 
+                isSubmarine(Ship) #/\ intersect(Ship, Submarine)))),
+
+        % verify that all mid positions are occupied
+        (forall(ShipMidPos, objects(MidPosIDs),
+            exists(Ship, objects(ShipsIDs),
+                intersect(Ship, ShipMidPos) #/\
+                #\ startsAt(Ship, ShipMidPos) #/\
+                #\ endsAt(Ship, ShipMidPos)))),
+
+        % verify that all left start positions are occupied
+        (forall(LeftStartPos, objects(LeftPosIDs),
+            exists(Ship, objects(ShipsIDs),
+                isHorizontal(Ship) #/\ startsAt(Ship, LeftStartPos)))),
+
+        % verify that all bottom start positions are occupied
+        (forall(BottomStartPos, objects(BottomPosIDs),
+            exists(Ship, objects(ShipsIDs),
+                isVertical(Ship) #/\ startsAt(Ship, BottomStartPos)))),
+
+        % verify that all right end positions are occupied
+        (forall(RightEndPos, objects(RightPosIDs),
+            exists(Ship, objects(ShipsIDs),
+                isHorizontal(Ship) #/\ endsAt(Ship, RightEndPos)))),
+
+        % verify that all top end positions are occupied
+        (forall(TopEndPos, objects(TopPosIDs),
+            exists(Ship, objects(ShipsIDs),
+                isVertical(Ship) #/\ endsAt(Ship, TopEndPos))))
+
+    ],
+    geost(AllObjects, Shapes, Options, Rules),
+
+    % apply restrictions of ships' segments count in rows and columns
+    force_horizontal_ships_counts(1, HorizontalCounts, Ships),
+    force_vertical_ships_counts(1, VerticalCounts, Ships),
+
+    append([ShipsShapes, X_Coords, Y_Coords], AllVars),
+    reset_timer, 
+    labeling([VariableSelection, ValueSelection, OrderSelection], AllVars),
+    
+    statistics(walltime,[_,StatTime]),
+	Time is ((StatTime//10)*10).
 
 /**
  * Create Ships list

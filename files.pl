@@ -21,6 +21,19 @@ read(File, NShips, Rows/Columns, Board, RowValues, ColumnValues) :-
     seen, !.
 
 /**
+ * Read List
+ * read_list(+File, -List)
+ * Reads a list from a file
+ * 
+ * File -> Path of the file
+ * List -> List read from the file
+ */
+ read_list(File, List) :-
+    see(File),
+    read(List),
+    seen, !.
+
+/**
  * Write
  * write(+File, +NShips, +Rows/Columns, +Board, +RowValues, +ColumnValues)
  * Writes to the file
@@ -41,3 +54,5 @@ write(File, NShips, Rows/Columns, Board, RowValues, ColumnValues) :-
     write(RowValues), write('.'), nl,
     write(ColumnValues), write('.'), nl,
     told, !.
+
+save_time(FileName, VarLabel, ValLabel, OrdLabel, Time).
