@@ -59,7 +59,12 @@ save_time(FileName, VarLabel, ValLabel, OrdLabel, Time) :-
     open('output.txt', append, File),
     write(File, FileName), write(File, ' - '), 
     write(File, VarLabel), write(File, ' - '),
-    write(File, VarLabel), write(File, ' - '),
+    write(File, ValLabel), write(File, ' - '),
     write(File, OrdLabel), write(File, ' - '),
     write(File, Time), write(File, '\n'),
     close(File), !.
+
+clear_output_file :-
+    tell('output.txt'), 
+    write(''),
+    told, !.

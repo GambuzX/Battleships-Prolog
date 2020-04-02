@@ -4,14 +4,14 @@ test_solve_battleships(FileList, VarLabelFile, ValLabelFile, OrdLabelFile) :-
     read_list(VarLabelFile, VarList), !,
     read_list(ValLabelFile, ValList), !,
     read_list(OrdLabelFile, OrdList), !,
+    clear_output_file,
     test_solve_battleships_files(FileList, VarList, ValList, OrdList), !.
 
 test_solve_battleships_files([], _, _, _) :- !.
 
 test_solve_battleships_files([File|FileList], VarList, ValList, OrdList) :- 
-    get_file_path(File, FileName),
-    test_solver(FileName, 3, VarList, ValList, OrdList),
-    test_solve_battleships(FileList).
+    test_solver(File, 3, VarList, ValList, OrdList),
+    test_solve_battleships_files(FileList, VarList, ValList, OrdList).
 
 
 test_solver(_, 0, _, _, _) :- !.
