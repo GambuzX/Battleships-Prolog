@@ -55,4 +55,11 @@ write(File, NShips, Rows/Columns, Board, RowValues, ColumnValues) :-
     write(ColumnValues), write('.'), nl,
     told, !.
 
-save_time(FileName, VarLabel, ValLabel, OrdLabel, Time).
+save_time(FileName, VarLabel, ValLabel, OrdLabel, Time) :-
+    open('output.txt', append, File),
+    write(File, FileName), write(File, ' - '), 
+    write(File, VarLabel), write(File, ' - '),
+    write(File, VarLabel), write(File, ' - '),
+    write(File, OrdLabel), write(File, ' - '),
+    write(File, Time), write(File, '\n'),
+    close(File), !.
