@@ -1,6 +1,7 @@
 :- include('battleships.pl').
 
-test_solve_battleships(FileList, VarLabelFile, ValLabelFile, OrdLabelFile) :-
+test_solve_battleships(FileListName, VarLabelFile, ValLabelFile, OrdLabelFile) :-
+    read_list(FileListName, FileList), !, 
     read_list(VarLabelFile, VarList), !,
     read_list(ValLabelFile, ValList), !,
     read_list(OrdLabelFile, OrdList), !,
