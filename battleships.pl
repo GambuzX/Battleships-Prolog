@@ -831,7 +831,9 @@ solve_battleships(_, _, _, _, _, _, _, _, _, _, _) :-
  * Time -> Labeling time
  */
 
-solve_battleships(Rows/Columns, NShips, WaterBlocksL, SubmarinesL, MidPosL, LeftPosL, BottomPosL, RightPosL, TopPosL, HorizontalCounts, VerticalCounts, VariableSelection, ValueSelection, OrderSelection, Time) :-
+solve_battleships(Rows/Columns, NShips, WaterBlocksL, SubmarinesL, MidPosL, LeftPosL, BottomPosL, RightPosL, TopPosL, HorizontalCounts, VerticalCounts, VariableSelection, ValueSelection, OrderSelection, ConstraintsTime, LabelingTime, Backtracks) :-
+    reset_timer, 
+    
     % gets the ship fleet depending on number of ships
     get_ship_fleet(NShips, ShipsShapes, X_Coords, Y_Coords, LexGroups),
 
@@ -1018,11 +1020,16 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, SubmarinesL, MidPosL, Left
     force_vertical_ships_counts(1, VerticalCounts, Ships),
 
     append([ShipsShapes, X_Coords, Y_Coords], AllVars),
+
+    statistics(walltime,[_,StatConstTime]),
+	ConstraintsTime is ((StatConstTime//10)*10),
+
     reset_timer, 
     labeling([VariableSelection, ValueSelection, OrderSelection], AllVars),
     
     statistics(walltime,[_,StatTime]),
-	Time is ((StatTime//10)*10).
+    fd_statistics(backtracks, Backtracks),
+	LabelingTime is ((StatTime//10)*10).
 
 /**
  * Create Ships list

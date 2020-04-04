@@ -55,13 +55,15 @@ write(File, NShips, Rows/Columns, Board, RowValues, ColumnValues) :-
     write(ColumnValues), write('.'), nl,
     told, !.
 
-save_time(FileName, VarLabel, ValLabel, OrdLabel, Time) :-
+save_test_results(FileName, VarLabel, ValLabel, OrdLabel, ConstraintsTime, LabelingTime, Backtracks) :-
     open('output.txt', append, File),
     write(File, FileName), write(File, ' - '), 
     write(File, VarLabel), write(File, ' - '),
     write(File, ValLabel), write(File, ' - '),
-    write(File, OrdLabel), write(File, ' - '),
-    write(File, Time), write(File, '\n'),
+    write(File, OrdLabel), write(File, ' - Labeling: '),
+    write(File, LabelingTime), write(File, 'ms - Constraints: '),
+    write(File, ConstraintsTime), write(File, 'ms - Backtracks: '),
+    write(File, Backtracks), write(File, '\n'),
     close(File), !.
 
 clear_output_file :-
