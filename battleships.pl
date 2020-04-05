@@ -810,7 +810,7 @@ solve_battleships(_, _, _, _, _, _, _, _, _, _, _) :-
 
 /**
  * Solve battleships
- * solve_battleships(+Dimensions, +NShips, +WaterBlocksList, +SubmarinesL, +MidPosL, +LeftPosL, +BottomPosL, +RightPosL, +TopPosL, +HorizontalCounts, +VerticalCounts, +VariableSelection, +ValueSelection, -Time)
+ * solve_battleships(+Dimensions, +NShips, +WaterBlocksList, +SubmarinesL, +MidPosL, +LeftPosL, +BottomPosL, +RightPosL, +TopPosL, +HorizontalCounts, +VerticalCounts, +VariableSelection, +ValueSelection, -ConstraintsTime, -LabelingTime, -Backtracks)
  * Solves a battleships problem, given the provided input values.
  * Finds the position of all the ships in the board.
  *
@@ -828,12 +828,13 @@ solve_battleships(_, _, _, _, _, _, _, _, _, _, _) :-
  * VariableSelection -> Variable selection option for labeling
  * ValueSelection -> Value selection option for labeling 
  * OrderdSelection -> Order selection option for labeling
- * Time -> Labeling time
+ * ConstraintsTime -> Constraints time
+ * LabelingTime -> Labeling time
+ * Backtracks -> Number of backtracks in labeling
  */
 
 solve_battleships(Rows/Columns, NShips, WaterBlocksL, SubmarinesL, MidPosL, LeftPosL, BottomPosL, RightPosL, TopPosL, HorizontalCounts, VerticalCounts, VariableSelection, ValueSelection, OrderSelection, ConstraintsTime, LabelingTime, Backtracks) :-
     reset_timer, 
-    
     % gets the ship fleet depending on number of ships
     get_ship_fleet(NShips, ShipsShapes, X_Coords, Y_Coords, LexGroups),
 
@@ -1025,7 +1026,7 @@ solve_battleships(Rows/Columns, NShips, WaterBlocksL, SubmarinesL, MidPosL, Left
 	ConstraintsTime is ((StatConstTime//10)*10),
 
     reset_timer, 
-    labeling([VariableSelection, ValueSelection, OrderSelection], AllVars),
+    labeling([VariableSelection, ValueSelection, OrderSelection, time_out(600000, _)], AllVars),
     
     statistics(walltime,[_,StatTime]),
     fd_statistics(backtracks, Backtracks),
