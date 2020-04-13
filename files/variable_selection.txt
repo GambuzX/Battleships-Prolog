@@ -1,1 +1,1 @@
-[ffc].
+[leftmost, ff, ffc].
