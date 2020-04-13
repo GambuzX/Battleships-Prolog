@@ -1,5 +1,22 @@
 :- include('battleships.pl').
 
+test_solve_battleships :-
+    FileListName = 'files/input_files_list.txt',
+    read_list(FileListName, FileList), !, 
+    read_list('files/variable_selection.txt', VarList), !,
+    read_list('files/value_selection.txt', ValList), !,
+    read_list('files/order_selection.txt', OrdList), !,
+    clear_output_file,
+    test_solve_battleships_files(FileList, VarList, ValList, OrdList), !.
+
+test_solve_battleships(FileListName) :-
+    read_list(FileListName, FileList), !, 
+    read_list('files/variable_selection.txt', VarList), !,
+    read_list('files/value_selection.txt', ValList), !,
+    read_list('files/order_selection.txt', OrdList), !,
+    clear_output_file,
+    test_solve_battleships_files(FileList, VarList, ValList, OrdList), !.
+
 test_solve_battleships(FileListName, VarLabelFile, ValLabelFile, OrdLabelFile) :-
     read_list(FileListName, FileList), !, 
     read_list(VarLabelFile, VarList), !,
@@ -75,5 +92,5 @@ run_order_tests(FileName, Rows/Columns, NShips, WaterBlocks, SubmarineBlocks, Mi
                       HorizontalCounts, VerticalCounts, VarLabel, ValLabel, OrdLabel, ConstraintsTime, LabelingTime, Backtracks),
     save_test_results(FileName, VarLabel, ValLabel, OrdLabel, ConstraintsTime, LabelingTime, Backtracks),
     N1 is N - 1,
-    run_order_tests(Rows/Columns, NShips, WaterBlocks, SubmarineBlocks, MiddleBlocks, LeftBlocks, BottomBlocks, RightBlocks, TopBlocks, 
+    run_order_tests(Filename, Rows/Columns, NShips, WaterBlocks, SubmarineBlocks, MiddleBlocks, LeftBlocks, BottomBlocks, RightBlocks, TopBlocks, 
                     HorizontalCounts, VerticalCounts, VarLabel, ValLabel, OrdLabel, N1), !.
