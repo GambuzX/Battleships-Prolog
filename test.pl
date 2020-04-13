@@ -75,5 +75,5 @@ run_order_tests(FileName, Rows/Columns, NShips, WaterBlocks, SubmarineBlocks, Mi
                       HorizontalCounts, VerticalCounts, VarLabel, ValLabel, OrdLabel, ConstraintsTime, LabelingTime, Backtracks),
     save_test_results(FileName, VarLabel, ValLabel, OrdLabel, ConstraintsTime, LabelingTime, Backtracks),
     N1 is N - 1,
-    run_order_tests(Rows/Columns, NShips, WaterBlocks, SubmarineBlocks, MiddleBlocks, LeftBlocks, BottomBlocks, RightBlocks, TopBlocks, 
+    run_order_tests(FileName, Rows/Columns, NShips, WaterBlocks, SubmarineBlocks, MiddleBlocks, LeftBlocks, BottomBlocks, RightBlocks, TopBlocks, 
                     HorizontalCounts, VerticalCounts, VarLabel, ValLabel, OrdLabel, N1), !.
