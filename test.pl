@@ -1,5 +1,22 @@
 :- include('battleships.pl').
 
+test_solve_battleships :-
+    FileListName = 'files/input_files_list.txt',
+    read_list(FileListName, FileList), !, 
+    read_list('files/variable_selection.txt', VarList), !,
+    read_list('files/value_selection.txt', ValList), !,
+    read_list('files/order_selection.txt', OrdList), !,
+    clear_output_file,
+    test_solve_battleships_files(FileList, VarList, ValList, OrdList), !.
+
+test_solve_battleships(FileListName) :-
+    read_list(FileListName, FileList), !, 
+    read_list('files/variable_selection.txt', VarList), !,
+    read_list('files/value_selection.txt', ValList), !,
+    read_list('files/order_selection.txt', OrdList), !,
+    clear_output_file,
+    test_solve_battleships_files(FileList, VarList, ValList, OrdList), !.
+
 test_solve_battleships(FileListName, VarLabelFile, ValLabelFile, OrdLabelFile) :-
     read_list(FileListName, FileList), !, 
     read_list(VarLabelFile, VarList), !,

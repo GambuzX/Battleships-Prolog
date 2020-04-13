@@ -1,3 +1,0 @@
-files/board_1.txt - ffc - median - up - 5420
-files/board_1.txt - ffc - median - up - 5950
-files/board_1.txt - ffc - median - up - 6100
