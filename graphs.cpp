@@ -188,23 +188,16 @@ int main(){
             f3 << "(" << backtracks[i].first << "," << backtracks[i].second << ")";
         }
 
-        f1 << "};" << endl << endl;
-        f2 << "};" << endl << endl;
-        f3 << "};" << endl << endl;
+        f1 << "};" << endl;
+        f2 << "};" << endl;
+        f3 << "};" << endl;
+
+        f1 << "\\addlegendentry{" << (*it)->getVariable() << "\\_" << (*it)->getValue() << "\\_" << (*it)->getOrder() << "}" << endl;
+        f2 << "\\addlegendentry{" << (*it)->getVariable() << "\\_" << (*it)->getValue() << "\\_" << (*it)->getOrder() << "}" << endl;
+        f3 << "\\addlegendentry{" << (*it)->getVariable() << "\\_" << (*it)->getValue() << "\\_" << (*it)->getOrder() << "}" << endl;
+
         color_index++;
     }
-    
-    f1 << "\\legend{";
-    f2 << "\\legend{";
-    f3 << "\\legend{";
-    for(auto it = fileInfo.begin(); it != fileInfo.end(); it++){
-        f1 << (*it)->getVariable() << "_" << (*it)->getValue() << "_" << (*it)->getOrder() << ","; 
-        f2 << (*it)->getVariable() << "_" << (*it)->getValue() << "_" << (*it)->getOrder() << ","; 
-        f3 << (*it)->getVariable() << "_" << (*it)->getValue() << "_" << (*it)->getOrder() << ","; 
-    }
-    f1 << "}" << endl << endl; 
-    f2 << "}" << endl << endl; 
-    f3 << "}" << endl << endl; 
 
     f1.close();
     f2.close();
