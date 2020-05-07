@@ -1,1 +1,1 @@
-[leftmost, ff, ffc, min, max].
+[leftmost, ff, ffc].

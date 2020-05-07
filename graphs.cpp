@@ -114,6 +114,8 @@ int main(){
         line = outputInfo[i];
         size_t dotPos = line.find("."); 
         int fileSize = stoi(line.substr(16, dotPos-16)); 
+        if(fileSize > 100 || fileSize < 25)
+            continue;
 
         line = line.substr(line.find("-")+2);
 
@@ -155,10 +157,12 @@ int main(){
 
     vector<string> colors = {
         "red", "green", "blue", "cyan", "magenta", "yellow", 
-        "black", "gray", "white", "darkgray", "lightgray", 
+        "black", "gray", "darkgray", "lightgray", 
         "brown", "lime", "olive", "orange", "pink", "purple", 
         "teal", "violet"
     };
+
+    vector<string> marks = {"circle", "square"};
 
     size_t color_index = 0;
     for(auto it = fileInfo.begin(); it != fileInfo.end(); it++){
@@ -168,9 +172,9 @@ int main(){
         f1 << "\tcolor=" << colors[color_index%colors.size()] << "," << endl;
         f2 << "\tcolor=" << colors[color_index%colors.size()] << "," << endl;
         f3 << "\tcolor=" << colors[color_index%colors.size()] << "," << endl;
-        f1 << "\tmark=square" << "," << endl;
-        f2 << "\tmark=square" << "," << endl;
-        f3 << "\tmark=square" << "," << endl;
+        f1 << "\tmark=" << marks[(color_index/colors.size())%marks.size()] << "," << endl;
+        f2 << "\tmark=" << marks[(color_index/colors.size())%marks.size()] << "," << endl;
+        f3 << "\tmark=" << marks[(color_index/colors.size())%marks.size()] << "," << endl;
         f1 << "\t]" << endl;
         f2 << "\t]" << endl;
         f3 << "\t]" << endl;
@@ -182,19 +186,19 @@ int main(){
         vector<pair<int, int>> constraintTimes = (*it)->getConstraintsTimes();
         vector<pair<int, int>> backtracks = (*it)->getBacktracks();  
 
-        for(size_t i = 0; i < labelingTimes.size(); i++){
-            f1 << "(" << labelingTimes[i].first << "," << labelingTimes[i].second << ")";
-            f2 << "(" << constraintTimes[i].first << "," << constraintTimes[i].second << ")";
-            f3 << "(" << backtracks[i].first << "," << backtracks[i].second << ")";
+        for(size_t i = 0; i < labelingTimes.size(); i+=3){
+            f1 << "(" << labelingTimes[i].first << "," << (labelingTimes[i].second+labelingTimes[i+1].second+labelingTimes[i+2].second)/3000.0 << ")";
+            f2 << "(" << constraintTimes[i].first << "," << (constraintTimes[i].second+constraintTimes[i+1].second+constraintTimes[i+2].second)/3000.0 << ")";
+            f3 << "(" << backtracks[i].first << "," << (backtracks[i].second+backtracks[i+1].second+backtracks[i+2].second)/3.0 << ")";
         }
 
         f1 << "};" << endl;
         f2 << "};" << endl;
         f3 << "};" << endl;
 
-        f1 << "\\addlegendentry{" << (*it)->getVariable() << "\\_" << (*it)->getValue() << "\\_" << (*it)->getOrder() << "}" << endl;
-        f2 << "\\addlegendentry{" << (*it)->getVariable() << "\\_" << (*it)->getValue() << "\\_" << (*it)->getOrder() << "}" << endl;
-        f3 << "\\addlegendentry{" << (*it)->getVariable() << "\\_" << (*it)->getValue() << "\\_" << (*it)->getOrder() << "}" << endl;
+        f1 << "\\addlegendentry{" << (*it)->getVariable() << "$," << (*it)->getValue() << "$," << (*it)->getOrder() << "}" << endl;
+        f2 << "\\addlegendentry{" << (*it)->getVariable() << "$," << (*it)->getValue() << "$," << (*it)->getOrder() << "}" << endl;
+        f3 << "\\addlegendentry{" << (*it)->getVariable() << "$," << (*it)->getValue() << "$," << (*it)->getOrder() << "}" << endl;
 
         color_index++;
     }
