@@ -1,0 +1,168 @@
+\addplot[
+	color=red,
+	mark=circle,
+	]
+	coordinates {
+	(25,2041)(50,2278)(75,477)(100,7)};
+\addlegendentry{ffc$,bisect$,down}
+\addplot[
+	color=green,
+	mark=circle,
+	]
+	coordinates {
+	(25,15709)(50,24685)(75,9522)(100,25)};
+\addlegendentry{ffc$,enum$,down}
+\addplot[
+	color=blue,
+	mark=circle,
+	]
+	coordinates {
+	(25,2407)(50,2571)(75,545)(100,7)};
+\addlegendentry{ffc$,step$,down}
+\addplot[
+	color=cyan,
+	mark=circle,
+	]
+	coordinates {
+	(25,8597)(50,13400)(75,667)(100,104)};
+\addlegendentry{ffc$,enum$,up}
+\addplot[
+	color=magenta,
+	mark=circle,
+	]
+	coordinates {
+	(25,1406)(50,900)(75,57)(100,63)};
+\addlegendentry{ffc$,step$,up}
+\addplot[
+	color=yellow,
+	mark=circle,
+	]
+	coordinates {
+	(25,2407)(50,2571)(75,545)(100,7)};
+\addlegendentry{ffc$,median$,down}
+\addplot[
+	color=black,
+	mark=circle,
+	]
+	coordinates {
+	(25,1406)(50,900)(75,57)(100,63)};
+\addlegendentry{ffc$,median$,up}
+\addplot[
+	color=gray,
+	mark=circle,
+	]
+	coordinates {
+	(25,8497)(50,1589)(75,78995)(100,4236)};
+\addlegendentry{leftmost$,enum$,up}
+\addplot[
+	color=darkgray,
+	mark=circle,
+	]
+	coordinates {
+	(25,1377)(50,163)(75,5587)(100,255)};
+\addlegendentry{leftmost$,step$,up}
+\addplot[
+	color=lightgray,
+	mark=circle,
+	]
+	coordinates {
+	(25,91745)(50,4898)(75,102)(100,43)};
+\addlegendentry{leftmost$,step$,down}
+\addplot[
+	color=brown,
+	mark=circle,
+	]
+	coordinates {
+	(25,1377)(50,163)(75,76584.7)(100,255)};
+\addlegendentry{leftmost$,median$,up}
+\addplot[
+	color=lime,
+	mark=circle,
+	]
+	coordinates {
+	(25,91745)(50,4898)(75,102)(100,43)};
+\addlegendentry{leftmost$,median$,down}
+\addplot[
+	color=olive,
+	mark=circle,
+	]
+	coordinates {
+	(25,1096)(50,1099)(75,53)(100,63)};
+\addlegendentry{ffc$,bisect$,up}
+\addplot[
+	color=orange,
+	mark=circle,
+	]
+	coordinates {
+	(25,1069)(50,191)(75,4366)(100,216)};
+\addlegendentry{leftmost$,bisect$,up}
+\addplot[
+	color=pink,
+	mark=circle,
+	]
+	coordinates {
+	(25,422404)(50,37262)(75,423)(100,558)};
+\addlegendentry{leftmost$,enum$,down}
+\addplot[
+	color=purple,
+	mark=circle,
+	]
+	coordinates {
+	(25,86554)(50,4298)(75,71)(100,31)};
+\addlegendentry{leftmost$,bisect$,down}
+\addplot[
+	color=teal,
+	mark=circle,
+	]
+	coordinates {
+	(25,8597)(50,13400)(75,667)(100,104)};
+\addlegendentry{ff$,enum$,up}
+\addplot[
+	color=violet,
+	mark=circle,
+	]
+	coordinates {
+	(25,2407)(50,2571)(75,545)(100,7)};
+\addlegendentry{ff$,step$,down}
+\addplot[
+	color=red,
+	mark=square,
+	]
+	coordinates {
+	(25,1406)(50,900)(75,57)(100,63)};
+\addlegendentry{ff$,median$,up}
+\addplot[
+	color=green,
+	mark=square,
+	]
+	coordinates {
+	(25,2407)(50,2571)(75,545)(100,7)};
+\addlegendentry{ff$,median$,down}
+\addplot[
+	color=blue,
+	mark=square,
+	]
+	coordinates {
+	(25,1406)(50,900)(75,57)(100,63)};
+\addlegendentry{ff$,step$,up}
+\addplot[
+	color=cyan,
+	mark=square,
+	]
+	coordinates {
+	(25,15709)(50,24685)(75,9522)(100,25)};
+\addlegendentry{ff$,enum$,down}
+\addplot[
+	color=magenta,
+	mark=square,
+	]
+	coordinates {
+	(25,1096)(50,1099)(75,53)(100,63)};
+\addlegendentry{ff$,bisect$,up}
+\addplot[
+	color=yellow,
+	mark=square,
+	]
+	coordinates {
+	(25,2041)(50,2278)(75,477)(100,7)};
+\addlegendentry{ff$,bisect$,down}

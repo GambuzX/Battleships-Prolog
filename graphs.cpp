@@ -5,6 +5,9 @@
 #include <unordered_set>
 #include <tuple>
 
+#define MIN_DIMENSION 25
+#define MAX_DIMENSION 100
+
 using namespace std;
 
 class FileInfo {
@@ -114,17 +117,26 @@ int main(){
         line = outputInfo[i];
         size_t dotPos = line.find("."); 
         int fileSize = stoi(line.substr(16, dotPos-16)); 
-        if(fileSize > 100 || fileSize < 25)
+        if(fileSize > MAX_DIMENSION || fileSize < MIN_DIMENSION)
             continue;
 
         line = line.substr(line.find("-")+2);
 
         string variable = line.substr(0, line.find(" "));
+
+        if(variable == "leftmost"){ // Delete leftmost from the graph 
+            continue;
+        }
+
         line = line.substr(line.find("-")+2);
 
         string value = line.substr(0, line.find(" "));
         line = line.substr(line.find("-")+2);
         
+        if(value == "enum"){  // Delete enum from the graph 
+            continue;
+        }
+
         string order = line.substr(0, line.find(" "));
         line = line.substr(line.find(":")+2);
 
