@@ -1,3 +1,14 @@
+\begin{tikzpicture}
+\begin{axis}[
+    axis lines = left,
+    xlabel = {Dimension $x*x$},
+    ylabel = {Time (s)},
+    legend columns=2, 
+    legend style={at={(0.5,-0.2)},anchor=north},
+    enlarge x limits=-1, %hack to plot on the full x-axis scale
+    width=11cm, %set bigger width
+    height=10cm,
+]
 \addplot[
 	color=red,
 	mark=circle,
@@ -166,3 +177,6 @@
 	coordinates {
 	(25,0.5)(50,1.30333)(75,1.47333)(100,0.206667)};
 \addlegendentry{ff$,bisect$,down}
+
+\end{axis}
+\end{tikzpicture}
