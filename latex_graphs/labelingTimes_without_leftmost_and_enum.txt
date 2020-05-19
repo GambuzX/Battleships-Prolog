@@ -93,3 +93,5 @@
 	coordinates {
 	(25,0.29)(50,0.53)(75,0.43)(100,1.28333)};
 \addlegendentry{ff$,bisect$,up}
+\end{axis}
+\end{tikzpicture}

@@ -21,75 +21,161 @@
 	mark=circle,
 	]
 	coordinates {
+	(25,0.656667)(50,1.39333)(75,1.28)(100,0.176667)};
+\addlegendentry{ffc$,enum$,down}
+\addplot[
+	color=blue,
+	mark=circle,
+	]
+	coordinates {
 	(25,0.546667)(50,1.39667)(75,1.16667)(100,0.18)};
 \addlegendentry{ffc$,step$,down}
 \addplot[
-	color=blue,
+	color=cyan,
+	mark=circle,
+	]
+	coordinates {
+	(25,0.48)(50,0.646667)(75,0.45)(100,1.26)};
+\addlegendentry{ffc$,enum$,up}
+\addplot[
+	color=magenta,
 	mark=circle,
 	]
 	coordinates {
 	(25,0.393333)(50,0.49)(75,0.436667)(100,1.27)};
 \addlegendentry{ffc$,step$,up}
 \addplot[
-	color=cyan,
+	color=yellow,
 	mark=circle,
 	]
 	coordinates {
 	(25,0.533333)(50,1.30667)(75,1.16333)(100,0.176667)};
 \addlegendentry{ffc$,median$,down}
 \addplot[
-	color=magenta,
-	mark=circle,
-	]
-	coordinates {
-	(25,0.556667)(50,1.28)(75,1.14333)(100,0.173333)};
-\addlegendentry{ff$,median$,down}
-\addplot[
-	color=yellow,
-	mark=circle,
-	]
-	coordinates {
-	(25,0.293333)(50,0.603333)(75,0.43)(100,1.28)};
-\addlegendentry{ffc$,bisect$,up}
-\addplot[
 	color=black,
-	mark=circle,
-	]
-	coordinates {
-	(25,0.393333)(50,0.486667)(75,0.433333)(100,1.26333)};
-\addlegendentry{ff$,median$,up}
-\addplot[
-	color=gray,
-	mark=circle,
-	]
-	coordinates {
-	(25,0.506667)(50,1.30667)(75,1.19667)(100,0.186667)};
-\addlegendentry{ff$,bisect$,down}
-\addplot[
-	color=darkgray,
-	mark=circle,
-	]
-	coordinates {
-	(25,0.396667)(50,0.46)(75,0.46)(100,1.28)};
-\addlegendentry{ff$,step$,up}
-\addplot[
-	color=lightgray,
 	mark=circle,
 	]
 	coordinates {
 	(25,0.393333)(50,0.463333)(75,0.433333)(100,1.28)};
 \addlegendentry{ffc$,median$,up}
 \addplot[
+	color=gray,
+	mark=circle,
+	]
+	coordinates {
+	(25,0.476667)(50,0.106667)(75,7.46667)(100,1.57)};
+\addlegendentry{leftmost$,enum$,up}
+\addplot[
+	color=darkgray,
+	mark=circle,
+	]
+	coordinates {
+	(25,0.383333)(50,0.0966667)(75,6.22333)(100,1.43)};
+\addlegendentry{leftmost$,step$,up}
+\addplot[
+	color=lightgray,
+	mark=circle,
+	]
+	coordinates {
+	(25,23.15)(50,2.93667)(75,0.573333)(100,0.22)};
+\addlegendentry{leftmost$,step$,down}
+\addplot[
 	color=brown,
+	mark=circle,
+	]
+	coordinates {
+	(25,0.386667)(50,0.11)(75,6.37667)(100,1.39667)};
+\addlegendentry{leftmost$,median$,up}
+\addplot[
+	color=lime,
+	mark=circle,
+	]
+	coordinates {
+	(25,22.7167)(50,2.96667)(75,0.58)(100,0.213333)};
+\addlegendentry{leftmost$,median$,down}
+\addplot[
+	color=olive,
+	mark=circle,
+	]
+	coordinates {
+	(25,0.293333)(50,0.603333)(75,0.43)(100,1.28)};
+\addlegendentry{ffc$,bisect$,up}
+\addplot[
+	color=orange,
+	mark=circle,
+	]
+	coordinates {
+	(25,0.286667)(50,0.1)(75,4.65667)(100,1.44667)};
+\addlegendentry{leftmost$,bisect$,up}
+\addplot[
+	color=pink,
+	mark=circle,
+	]
+	coordinates {
+	(25,22.1133)(50,3.29)(75,0.586667)(100,0.22)};
+\addlegendentry{leftmost$,enum$,down}
+\addplot[
+	color=purple,
+	mark=circle,
+	]
+	coordinates {
+	(25,21.4633)(50,2.72)(75,0.583333)(100,0.2)};
+\addlegendentry{leftmost$,bisect$,down}
+\addplot[
+	color=teal,
+	mark=circle,
+	]
+	coordinates {
+	(25,0.473333)(50,0.65)(75,0.466667)(100,1.27333)};
+\addlegendentry{ff$,enum$,up}
+\addplot[
+	color=violet,
 	mark=circle,
 	]
 	coordinates {
 	(25,0.536667)(50,1.29)(75,1.17667)(100,0.193333)};
 \addlegendentry{ff$,step$,down}
 \addplot[
-	color=lime,
-	mark=circle,
+	color=red,
+	mark=square,
+	]
+	coordinates {
+	(25,0.393333)(50,0.486667)(75,0.433333)(100,1.26333)};
+\addlegendentry{ff$,median$,up}
+\addplot[
+	color=green,
+	mark=square,
+	]
+	coordinates {
+	(25,0.556667)(50,1.28)(75,1.14333)(100,0.173333)};
+\addlegendentry{ff$,median$,down}
+\addplot[
+	color=blue,
+	mark=square,
+	]
+	coordinates {
+	(25,0.396667)(50,0.46)(75,0.46)(100,1.28)};
+\addlegendentry{ff$,step$,up}
+\addplot[
+	color=cyan,
+	mark=square,
+	]
+	coordinates {
+	(25,0.653333)(50,1.35667)(75,1.28)(100,0.18)};
+\addlegendentry{ff$,enum$,down}
+\addplot[
+	color=magenta,
+	mark=square,
 	]
 	coordinates {
 	(25,0.29)(50,0.53)(75,0.43)(100,1.28333)};
 \addlegendentry{ff$,bisect$,up}
+\addplot[
+	color=yellow,
+	mark=square,
+	]
+	coordinates {
+	(25,0.506667)(50,1.30667)(75,1.19667)(100,0.186667)};
+\addlegendentry{ff$,bisect$,down}
+\end{axis}
+\end{tikzpicture}

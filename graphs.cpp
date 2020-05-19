@@ -194,9 +194,9 @@ int main(){
 }
 
 void writeGraphs(unordered_set<FileInfo*, FileInfoHashFunction, FileInfoComparator> &fileInfo){
-    ofstream f1("labelingTimes_complete.txt");
-    ofstream f2("constraintsTimes_complete.txt");
-    ofstream f3("backtracks_complete.txt");
+    ofstream f1("labelingTimes_without_leftmost.txt");
+    ofstream f2("constraintsTimes_without_leftmost.txt");
+    ofstream f3("backtracks_without_leftmost.txt");
 
     size_t color_index = 0;
 
@@ -225,6 +225,10 @@ void writeGraphs(unordered_set<FileInfo*, FileInfoHashFunction, FileInfoComparat
 
         color_index++;
     }
+
+    endGraph(f1);
+    endGraph(f2);
+    endGraph(f3);
 
     f1.close();
     f2.close();
