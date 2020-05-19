@@ -1,3 +1,14 @@
+\begin{tikzpicture}
+\begin{axis}[
+	axis lines = left,
+	xlabel = {Dimension $x*x$},
+	ylabel = {Number of Backtracks},
+	legend columns=4, 
+	legend style={at={(0.5,-0.2)},anchor=north},
+	enlarge x limits=-1, %hack to plot on the full x-axis scale
+	width=11cm, %set bigger width
+	height=10cm,
+]
 \addplot[
 	color=red,
 	mark=circle,
@@ -10,159 +21,75 @@
 	mark=circle,
 	]
 	coordinates {
-	(25,15709)(50,24685)(75,9522)(100,25)};
-\addlegendentry{ffc$,enum$,down}
-\addplot[
-	color=blue,
-	mark=circle,
-	]
-	coordinates {
 	(25,2407)(50,2571)(75,545)(100,7)};
 \addlegendentry{ffc$,step$,down}
 \addplot[
-	color=cyan,
-	mark=circle,
-	]
-	coordinates {
-	(25,8597)(50,13400)(75,667)(100,104)};
-\addlegendentry{ffc$,enum$,up}
-\addplot[
-	color=magenta,
+	color=blue,
 	mark=circle,
 	]
 	coordinates {
 	(25,1406)(50,900)(75,57)(100,63)};
 \addlegendentry{ffc$,step$,up}
 \addplot[
-	color=yellow,
+	color=cyan,
 	mark=circle,
 	]
 	coordinates {
 	(25,2407)(50,2571)(75,545)(100,7)};
 \addlegendentry{ffc$,median$,down}
 \addplot[
-	color=black,
+	color=magenta,
 	mark=circle,
 	]
 	coordinates {
-	(25,1406)(50,900)(75,57)(100,63)};
-\addlegendentry{ffc$,median$,up}
+	(25,2407)(50,2571)(75,545)(100,7)};
+\addlegendentry{ff$,median$,down}
 \addplot[
-	color=gray,
-	mark=circle,
-	]
-	coordinates {
-	(25,8497)(50,1589)(75,78995)(100,4236)};
-\addlegendentry{leftmost$,enum$,up}
-\addplot[
-	color=darkgray,
-	mark=circle,
-	]
-	coordinates {
-	(25,1377)(50,163)(75,5587)(100,255)};
-\addlegendentry{leftmost$,step$,up}
-\addplot[
-	color=lightgray,
-	mark=circle,
-	]
-	coordinates {
-	(25,91745)(50,4898)(75,102)(100,43)};
-\addlegendentry{leftmost$,step$,down}
-\addplot[
-	color=brown,
-	mark=circle,
-	]
-	coordinates {
-	(25,1377)(50,163)(75,76584.7)(100,255)};
-\addlegendentry{leftmost$,median$,up}
-\addplot[
-	color=lime,
-	mark=circle,
-	]
-	coordinates {
-	(25,91745)(50,4898)(75,102)(100,43)};
-\addlegendentry{leftmost$,median$,down}
-\addplot[
-	color=olive,
+	color=yellow,
 	mark=circle,
 	]
 	coordinates {
 	(25,1096)(50,1099)(75,53)(100,63)};
 \addlegendentry{ffc$,bisect$,up}
 \addplot[
-	color=orange,
+	color=black,
 	mark=circle,
 	]
 	coordinates {
-	(25,1069)(50,191)(75,4366)(100,216)};
-\addlegendentry{leftmost$,bisect$,up}
+	(25,1406)(50,900)(75,57)(100,63)};
+\addlegendentry{ff$,median$,up}
 \addplot[
-	color=pink,
+	color=gray,
 	mark=circle,
 	]
 	coordinates {
-	(25,422404)(50,37262)(75,423)(100,558)};
-\addlegendentry{leftmost$,enum$,down}
+	(25,2041)(50,2278)(75,477)(100,7)};
+\addlegendentry{ff$,bisect$,down}
 \addplot[
-	color=purple,
+	color=darkgray,
 	mark=circle,
 	]
 	coordinates {
-	(25,86554)(50,4298)(75,71)(100,31)};
-\addlegendentry{leftmost$,bisect$,down}
+	(25,1406)(50,900)(75,57)(100,63)};
+\addlegendentry{ff$,step$,up}
 \addplot[
-	color=teal,
+	color=lightgray,
 	mark=circle,
 	]
 	coordinates {
-	(25,8597)(50,13400)(75,667)(100,104)};
-\addlegendentry{ff$,enum$,up}
+	(25,1406)(50,900)(75,57)(100,63)};
+\addlegendentry{ffc$,median$,up}
 \addplot[
-	color=violet,
+	color=brown,
 	mark=circle,
 	]
 	coordinates {
 	(25,2407)(50,2571)(75,545)(100,7)};
 \addlegendentry{ff$,step$,down}
 \addplot[
-	color=red,
-	mark=square,
-	]
-	coordinates {
-	(25,1406)(50,900)(75,57)(100,63)};
-\addlegendentry{ff$,median$,up}
-\addplot[
-	color=green,
-	mark=square,
-	]
-	coordinates {
-	(25,2407)(50,2571)(75,545)(100,7)};
-\addlegendentry{ff$,median$,down}
-\addplot[
-	color=blue,
-	mark=square,
-	]
-	coordinates {
-	(25,1406)(50,900)(75,57)(100,63)};
-\addlegendentry{ff$,step$,up}
-\addplot[
-	color=cyan,
-	mark=square,
-	]
-	coordinates {
-	(25,15709)(50,24685)(75,9522)(100,25)};
-\addlegendentry{ff$,enum$,down}
-\addplot[
-	color=magenta,
-	mark=square,
+	color=lime,
+	mark=circle,
 	]
 	coordinates {
 	(25,1096)(50,1099)(75,53)(100,63)};
 \addlegendentry{ff$,bisect$,up}
-\addplot[
-	color=yellow,
-	mark=square,
-	]
-	coordinates {
-	(25,2041)(50,2278)(75,477)(100,7)};
-\addlegendentry{ff$,bisect$,down}

@@ -95,6 +95,31 @@ public:
     }
 };
 
+typedef enum  {
+    LABELING,
+    CONSTRAINTS,
+    BACKTRACKS
+} graphType;
+
+vector<string> colors = {
+    "red", "green", "blue", "cyan", "magenta", "yellow", 
+    "black", "gray", "darkgray", "lightgray", 
+    "brown", "lime", "olive", "orange", "pink", "purple", 
+    "teal", "violet"
+};
+
+vector<string> marks = {"circle", "square"};
+
+/**
+ * Functions to write tikzpictures graphs
+ */
+void beginGraph(ofstream &f, graphType type);
+void endGraph(ofstream &f);
+void addPlotOptions(ofstream &f, string color, string mark);
+void addPair(ofstream &f, int first, double second);
+void addLegendEntry(ofstream &f, string variable, string value, string order);
+void writeGraphs(unordered_set<FileInfo*, FileInfoHashFunction, FileInfoComparator> &fileInfo);
+
 int main(){
     ifstream f("output.txt");
 
@@ -163,54 +188,40 @@ int main(){
         }
     }
 
-    ofstream f1("labelingTimes.txt");
-    ofstream f2("constraintsTimes.txt");
-    ofstream f3("backtracks.txt");
+    writeGraphs(fileInfo);
 
-    vector<string> colors = {
-        "red", "green", "blue", "cyan", "magenta", "yellow", 
-        "black", "gray", "darkgray", "lightgray", 
-        "brown", "lime", "olive", "orange", "pink", "purple", 
-        "teal", "violet"
-    };
+    return 0;
+}
 
-    vector<string> marks = {"circle", "square"};
+void writeGraphs(unordered_set<FileInfo*, FileInfoHashFunction, FileInfoComparator> &fileInfo){
+    ofstream f1("labelingTimes_complete.txt");
+    ofstream f2("constraintsTimes_complete.txt");
+    ofstream f3("backtracks_complete.txt");
 
     size_t color_index = 0;
+
+    beginGraph(f1, LABELING);
+    beginGraph(f2, CONSTRAINTS);
+    beginGraph(f3, BACKTRACKS);
+
     for(auto it = fileInfo.begin(); it != fileInfo.end(); it++){
-        f1 << "\\addplot[" << endl;
-        f2 << "\\addplot[" << endl;
-        f3 << "\\addplot[" << endl;
-        f1 << "\tcolor=" << colors[color_index%colors.size()] << "," << endl;
-        f2 << "\tcolor=" << colors[color_index%colors.size()] << "," << endl;
-        f3 << "\tcolor=" << colors[color_index%colors.size()] << "," << endl;
-        f1 << "\tmark=" << marks[(color_index/colors.size())%marks.size()] << "," << endl;
-        f2 << "\tmark=" << marks[(color_index/colors.size())%marks.size()] << "," << endl;
-        f3 << "\tmark=" << marks[(color_index/colors.size())%marks.size()] << "," << endl;
-        f1 << "\t]" << endl;
-        f2 << "\t]" << endl;
-        f3 << "\t]" << endl;
-        f1 << "\tcoordinates {" << endl << "\t";
-        f2 << "\tcoordinates {" << endl << "\t";
-        f3 << "\tcoordinates {" << endl << "\t";
+        addPlotOptions(f1, colors[color_index%colors.size()], marks[(color_index/colors.size())%marks.size()]);
+        addPlotOptions(f2, colors[color_index%colors.size()], marks[(color_index/colors.size())%marks.size()]);
+        addPlotOptions(f3, colors[color_index%colors.size()], marks[(color_index/colors.size())%marks.size()]);
 
         vector<pair<int, int>> labelingTimes = (*it)->getLabelingTimes();
         vector<pair<int, int>> constraintTimes = (*it)->getConstraintsTimes();
         vector<pair<int, int>> backtracks = (*it)->getBacktracks();  
 
         for(size_t i = 0; i < labelingTimes.size(); i+=3){
-            f1 << "(" << labelingTimes[i].first << "," << (labelingTimes[i].second+labelingTimes[i+1].second+labelingTimes[i+2].second)/3000.0 << ")";
-            f2 << "(" << constraintTimes[i].first << "," << (constraintTimes[i].second+constraintTimes[i+1].second+constraintTimes[i+2].second)/3000.0 << ")";
-            f3 << "(" << backtracks[i].first << "," << (backtracks[i].second+backtracks[i+1].second+backtracks[i+2].second)/3.0 << ")";
+            addPair(f1, labelingTimes[i].first, (labelingTimes[i].second+labelingTimes[i+1].second+labelingTimes[i+2].second)/3000.0);
+            addPair(f2, constraintTimes[i].first, (constraintTimes[i].second+constraintTimes[i+1].second+constraintTimes[i+2].second)/3000.0);
+            addPair(f3, backtracks[i].first, (backtracks[i].second+backtracks[i+1].second+backtracks[i+2].second)/3.0);
         }
 
-        f1 << "};" << endl;
-        f2 << "};" << endl;
-        f3 << "};" << endl;
-
-        f1 << "\\addlegendentry{" << (*it)->getVariable() << "$," << (*it)->getValue() << "$," << (*it)->getOrder() << "}" << endl;
-        f2 << "\\addlegendentry{" << (*it)->getVariable() << "$," << (*it)->getValue() << "$," << (*it)->getOrder() << "}" << endl;
-        f3 << "\\addlegendentry{" << (*it)->getVariable() << "$," << (*it)->getValue() << "$," << (*it)->getOrder() << "}" << endl;
+        addLegendEntry(f1, (*it)->getVariable(), (*it)->getValue(), (*it)->getOrder());
+        addLegendEntry(f2, (*it)->getVariable(), (*it)->getValue(), (*it)->getOrder());
+        addLegendEntry(f3, (*it)->getVariable(), (*it)->getValue(), (*it)->getOrder());
 
         color_index++;
     }
@@ -218,6 +229,44 @@ int main(){
     f1.close();
     f2.close();
     f3.close();
+}
 
-    return 0;
+void beginGraph(ofstream &f, graphType type){
+    f << "\\begin{tikzpicture}" << endl;
+    f << "\\begin{axis}[" << endl;
+    f << "\taxis lines = left," << endl;
+    f << "\txlabel = {Dimension $x*x$}," << endl;
+    if(type == LABELING || type == CONSTRAINTS){
+        f << "\tylabel = {Time (s)}," << endl;
+    }else{
+        f << "\tylabel = {Number of Backtracks}," << endl;
+    }
+    f << "\tlegend columns=4, " << endl;
+    f << "\tlegend style={at={(0.5,-0.2)},anchor=north}," << endl;
+    f << "\tenlarge x limits=-1, %hack to plot on the full x-axis scale" << endl;
+    f << "\twidth=11cm, %set bigger width" << endl;
+    f << "\theight=10cm," << endl;
+    f << "]" << endl;
+}
+
+void endGraph(ofstream &f){
+    f << "\\end{axis}" << endl;
+    f << "\\end{tikzpicture}" << endl;
+}
+
+void addPlotOptions(ofstream &f, string color, string mark){
+    f << "\\addplot[" << endl;
+    f << "\tcolor=" << color << "," << endl;
+    f << "\tmark=" << mark << "," << endl;
+    f << "\t]" << endl;
+    f << "\tcoordinates {" << endl << "\t";
+}
+
+void addPair(ofstream &f, int first, double second){
+    f << "(" << first << "," << second << ")";
+}
+
+void addLegendEntry(ofstream &f, string variable, string value, string order){
+    f << "};" << endl;
+    f << "\\addlegendentry{" << variable << "$," << value << "$," << order << "}" << endl;
 }
