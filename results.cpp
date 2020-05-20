@@ -4,6 +4,9 @@
 #include <iostream>
 #include <unordered_set>
 #include <tuple>
+#include <algorithm>
+#include <string.h>
+#include <iomanip>
 
 #define MIN_DIMENSION 25
 #define MAX_DIMENSION 100
@@ -120,7 +123,20 @@ void addPair(ofstream &f, int first, double second);
 void addLegendEntry(ofstream &f, string variable, string value, string order);
 void writeGraphs(unordered_set<FileInfo*, FileInfoHashFunction, FileInfoComparator> &fileInfo);
 
-int main(){
+
+void writeTable(unordered_set<FileInfo*, FileInfoHashFunction, FileInfoComparator> &fileInfo);
+void writeTableRow(ofstream & f, vector<pair<int, int>> labelingTimes, vector<pair<int, int>> constraintTimes, vector<pair<int, int>> backtracks);
+
+int main(int argc, char* argv[]){
+    if(argc < 2){
+        cout << "Error: Missing arguments!" << endl;
+        cout << "results -g|-t" << endl;
+        cout << "\t-g: creates the tikzpicture latex graphs" << endl;
+        cout << "\t-t: creates the tabular latex table" << endl;
+
+        return -1;
+    }
+
     ifstream f("output.txt");
 
     string line;
@@ -149,18 +165,18 @@ int main(){
 
         string variable = line.substr(0, line.find(" "));
 
-        if(variable == "leftmost"){ // Delete leftmost from the graph 
+        /*if(variable == "leftmost"){ // Delete leftmost from the graph 
             continue;
-        }
+        }*/
 
         line = line.substr(line.find("-")+2);
 
         string value = line.substr(0, line.find(" "));
         line = line.substr(line.find("-")+2);
         
-        if(value == "enum"){  // Delete enum from the graph 
+        /*if(value == "enum"){  // Delete enum from the graph 
             continue;
-        }
+        }*/
 
         string order = line.substr(0, line.find(" "));
         line = line.substr(line.find(":")+2);
@@ -188,15 +204,86 @@ int main(){
         }
     }
 
-    writeGraphs(fileInfo);
+    if(strcmp(argv[1], "-g") == 0){
+        cout << "Creating graphs..." << endl;
+        writeGraphs(fileInfo);
+    }
+    else if(strcmp(argv[1], "-t") == 0){
+        cout << "Creating table..." << endl;
+        writeTable(fileInfo);
+    }else{
+        cout << "Error: Unknown option!" << endl;
+        return -1;
+    }
 
     return 0;
 }
 
+bool vectorPairComp(pair<int, int> i, pair<int, int> j) { return (i.first<j.first); }
+
+void writeTable(unordered_set<FileInfo*, FileInfoHashFunction, FileInfoComparator> &fileInfo){
+    ofstream f("latex_table/table.txt");
+
+    f << setprecision(2);
+
+    f << "\\begin{table}[]" << endl;
+    f << "\\centering" << endl;
+    f << "\\begin{tabular}{ p{3.5em} p{3em} p{2.5em} || p{2.5em} p{2.5em} p{3.5em} | p{2.5em} p{2.5em} p{3.5em} | p{2.5em} p{2.5em} p{3.5em} | p{2.5em} p{2.5em} p{3.5em} }" << endl; 
+    f << "\\multicolumn{3}{c||}{Variables} & \\multicolumn{12}{c}{Dimensions} \\\\ [1ex]" << endl;
+    f << "\\hline" << endl;
+    f << "\\multirow{2}{2em}{VAR} & \\multirow{2}{2em}{VAL} & \\multirow{2}{2em}{ORD} & \\multicolumn{3}{c|}{25} & \\multicolumn{3}{c|}{50} & \\multicolumn{3}{c|}{75} & \\multicolumn{3}{c}{100} \\\\ [1ex]" << endl;
+    f << "& & & LT & CT & NB & LT & CT & NB & LT & CT & NB & LT & CT & NB \\\\ [1ex]" << endl;
+    f << "\\hline\\hline" << endl;
+
+    vector<pair<int, int>> labelingTimes;
+    vector<pair<int, int>> constraintTimes;
+    vector<pair<int, int>> backtracks;
+
+    for(auto it = fileInfo.begin(); it != fileInfo.end(); it++){
+        f << (*it)->getVariable() << " & " << (*it)->getValue() << " & " << (*it)->getOrder() << " & ";
+        
+        labelingTimes = (*it)->getLabelingTimes();
+        constraintTimes = (*it)->getConstraintsTimes();
+        backtracks = (*it)->getBacktracks();
+
+        sort(labelingTimes.begin(), labelingTimes.end(), vectorPairComp);
+        sort(constraintTimes.begin(), constraintTimes.end(), vectorPairComp);
+        sort(backtracks.begin(), backtracks.end(), vectorPairComp);
+
+        writeTableRow(f, labelingTimes, constraintTimes, backtracks);
+    }
+    f << "\\end{tabular}" << endl;
+    f << "\t\\caption{}" << endl;
+    f << "\t\\label{tab:my_label}" << endl;
+    f << "\\end{table}" << endl;
+
+    f.close();
+}
+
+void writeTableRow(ofstream & f, vector<pair<int, int>> labelingTimes, vector<pair<int, int>> constraintTimes, vector<pair<int, int>> backtracks){
+    f << (labelingTimes[0].second+labelingTimes[1].second+labelingTimes[2].second)/3000.0 << " & "; 
+    f << (constraintTimes[0].second+constraintTimes[1].second+constraintTimes[2].second)/3000.0 << " & "; 
+    f << (backtracks[0].second+backtracks[1].second+backtracks[2].second)/3.0 << " & ";                 
+    
+    f << (labelingTimes[3].second+labelingTimes[4].second+labelingTimes[5].second)/3000.0 << " & "; 
+    f << (constraintTimes[3].second+constraintTimes[4].second+constraintTimes[5].second)/3000.0 << " & "; 
+    f << (backtracks[3].second+backtracks[4].second+backtracks[5].second)/3.0 << " & ";
+
+    f << (labelingTimes[6].second+labelingTimes[7].second+labelingTimes[8].second)/3000.0 << " & "; 
+    f << (constraintTimes[6].second+constraintTimes[7].second+constraintTimes[8].second)/3000.0 << " & "; 
+    f << (backtracks[6].second+backtracks[7].second+backtracks[8].second)/3.0 << " & ";
+
+    f << (labelingTimes[9].second+labelingTimes[10].second+labelingTimes[11].second)/3000.0 << "&";
+    f << (constraintTimes[9].second+constraintTimes[10].second+constraintTimes[11].second)/3000.0 << "&"; 
+    f << (backtracks[9].second+backtracks[10].second+backtracks[11].second)/3.0 << "\\\\" << endl;
+
+    f << "\\hline" << endl;
+}
+
 void writeGraphs(unordered_set<FileInfo*, FileInfoHashFunction, FileInfoComparator> &fileInfo){
-    ofstream f1("labelingTimes_without_leftmost.txt");
-    ofstream f2("constraintsTimes_without_leftmost.txt");
-    ofstream f3("backtracks_without_leftmost.txt");
+    ofstream f1("labelingTimes_complete.txt");
+    ofstream f2("constraintsTimes_complete.txt");
+    ofstream f3("backtracks_without_complete.txt");
 
     size_t color_index = 0;
 
