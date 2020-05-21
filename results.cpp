@@ -2,13 +2,13 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include <unordered_set>
+#include <set>
 #include <tuple>
 #include <algorithm>
 #include <string.h>
 #include <iomanip>
 
-#define MIN_DIMENSION 25
+#define MIN_DIMENSION 8
 #define MAX_DIMENSION 100
 
 using namespace std;
@@ -51,6 +51,21 @@ public:
         return true;
     }
 
+    bool operator<(const FileInfo& f) const {
+        if(this->variable < f.getVariable())
+            return true;
+        if(this->variable == f.getVariable()){
+            if(this->value < f.getValue())
+                return true;
+            if(this->value == f.getValue()){
+                if(this->order < f.getOrder())
+                    return true;
+            }
+        }
+        return false;
+    }
+
+
     void addLabelingTime(int size, int time){
         this->labelingTimes.push_back(make_pair(size, time));
     }
@@ -88,13 +103,17 @@ public:
 class FileInfoComparator {
 public: 
     bool operator()(const FileInfo* f1, const FileInfo* f2) const{
-        if(f1->getVariable() != f2->getVariable())
-            return false;
-        if(f1->getValue() != f2->getValue())
-            return false;
-        if(f1->getOrder() != f2->getOrder())
-            return false;
-        return true;
+        if(f1->getVariable() < f2->getVariable())
+            return true;
+        if(f1->getVariable() == f2->getVariable()){
+            if(f1->getValue() < f2->getValue())
+                return true;
+            if(f1->getValue() == f2->getValue()){
+                if(f1->getOrder() < f2->getOrder())
+                    return true;
+            }
+        }
+        return false;
     }
 };
 
@@ -121,10 +140,10 @@ void endGraph(ofstream &f);
 void addPlotOptions(ofstream &f, string color, string mark);
 void addPair(ofstream &f, int first, double second);
 void addLegendEntry(ofstream &f, string variable, string value, string order);
-void writeGraphs(unordered_set<FileInfo*, FileInfoHashFunction, FileInfoComparator> &fileInfo);
+void writeGraphs(set<FileInfo*, FileInfoComparator> &fileInfo);
 
 
-void writeTable(unordered_set<FileInfo*, FileInfoHashFunction, FileInfoComparator> &fileInfo);
+void writeTable(set<FileInfo*, FileInfoComparator> &fileInfo);
 void writeTableRow(ofstream & f, vector<pair<int, int>> labelingTimes, vector<pair<int, int>> constraintTimes, vector<pair<int, int>> backtracks);
 
 int main(int argc, char* argv[]){
@@ -151,7 +170,7 @@ int main(int argc, char* argv[]){
 
     f.close();
 
-    unordered_set<FileInfo*, FileInfoHashFunction, FileInfoComparator> fileInfo;
+    set<FileInfo*, FileInfoComparator> fileInfo;
     
     // Create set with information about each tuple of labeling options
     for(size_t i = 0; i < outputInfo.size(); i++){
@@ -191,7 +210,7 @@ int main(int argc, char* argv[]){
 
         FileInfo* newFileInfo = new FileInfo(variable, value, order);
 
-        unordered_set<FileInfo*, FileInfoHashFunction, FileInfoComparator>::iterator it = fileInfo.find(newFileInfo);
+        set<FileInfo*, FileInfoComparator>::iterator it = fileInfo.find(newFileInfo);
         if(it != fileInfo.end()){
             (*it)->addLabelingTime(fileSize, labelingTime);
             (*it)->addConstraintsTime(fileSize, constraintsTime);
@@ -221,18 +240,18 @@ int main(int argc, char* argv[]){
 
 bool vectorPairComp(pair<int, int> i, pair<int, int> j) { return (i.first<j.first); }
 
-void writeTable(unordered_set<FileInfo*, FileInfoHashFunction, FileInfoComparator> &fileInfo){
+void writeTable(set<FileInfo*, FileInfoComparator> &fileInfo){
     ofstream f("latex_table/table.txt");
 
     f << setprecision(2);
 
-    f << "\\begin{table}[]" << endl;
+    f << "\\begin{table}" << endl;
     f << "\\centering" << endl;
-    f << "\\begin{tabular}{ p{3.5em} p{3em} p{2.5em} || p{2.5em} p{2.5em} p{3.5em} | p{2.5em} p{2.5em} p{3.5em} | p{2.5em} p{2.5em} p{3.5em} | p{2.5em} p{2.5em} p{3.5em} }" << endl; 
-    f << "\\multicolumn{3}{c||}{Variables} & \\multicolumn{12}{c}{Dimensions} \\\\ [1ex]" << endl;
+    f << "\\begin{tabular}{ p{3.5em} p{3em} p{2.5em} || p{2.5em} | p{2.5em} | p{2.5em} | p{2.5em} | p{2.5em} | p{2.5em} | p{2.5em} | p{2.5em} | p{2.5em}}" << endl; 
+    f << "\\multicolumn{3}{c||}{Variables} & \\multicolumn{9}{c}{Dimensions} \\\\ [1ex]" << endl;
     f << "\\hline" << endl;
-    f << "\\multirow{2}{2em}{VAR} & \\multirow{2}{2em}{VAL} & \\multirow{2}{2em}{ORD} & \\multicolumn{3}{c|}{25} & \\multicolumn{3}{c|}{50} & \\multicolumn{3}{c|}{75} & \\multicolumn{3}{c}{100} \\\\ [1ex]" << endl;
-    f << "& & & LT & CT & NB & LT & CT & NB & LT & CT & NB & LT & CT & NB \\\\ [1ex]" << endl;
+    f << "VAR & VAL & ORD & 8 & 9 & 10 & 11 & 12 & 25 & 50 & 75 & 100 \\\\ [1ex]" << endl;
+    //f << "& & & LT & CT & NB & LT & CT & NB & LT & CT & NB & LT & CT & NB \\\\ [1ex]" << endl;
     f << "\\hline\\hline" << endl;
 
     vector<pair<int, int>> labelingTimes;
@@ -252,6 +271,7 @@ void writeTable(unordered_set<FileInfo*, FileInfoHashFunction, FileInfoComparato
 
         writeTableRow(f, labelingTimes, constraintTimes, backtracks);
     }
+    f << "\\hline" << endl;
     f << "\\end{tabular}" << endl;
     f << "\t\\caption{}" << endl;
     f << "\t\\label{tab:my_label}" << endl;
@@ -261,26 +281,39 @@ void writeTable(unordered_set<FileInfo*, FileInfoHashFunction, FileInfoComparato
 }
 
 void writeTableRow(ofstream & f, vector<pair<int, int>> labelingTimes, vector<pair<int, int>> constraintTimes, vector<pair<int, int>> backtracks){
-    f << (labelingTimes[0].second+labelingTimes[1].second+labelingTimes[2].second)/3000.0 << " & "; 
-    f << (constraintTimes[0].second+constraintTimes[1].second+constraintTimes[2].second)/3000.0 << " & "; 
+    int i = 0; 
+    f << (labelingTimes[i].second+labelingTimes[i+1].second+labelingTimes[i+2].second)/3000.0 << " & "; 
+    /*f << (constraintTimes[0].second+constraintTimes[1].second+constraintTimes[2].second)/3000.0 << " & "; 
     f << (backtracks[0].second+backtracks[1].second+backtracks[2].second)/3.0 << " & ";                 
-    
-    f << (labelingTimes[3].second+labelingTimes[4].second+labelingTimes[5].second)/3000.0 << " & "; 
-    f << (constraintTimes[3].second+constraintTimes[4].second+constraintTimes[5].second)/3000.0 << " & "; 
+    */
+    f << (labelingTimes[i+3].second+labelingTimes[i+4].second+labelingTimes[i+5].second)/3000.0 << " & "; 
+   /* f << (constraintTimes[3].second+constraintTimes[4].second+constraintTimes[5].second)/3000.0 << " & "; 
     f << (backtracks[3].second+backtracks[4].second+backtracks[5].second)/3.0 << " & ";
-
-    f << (labelingTimes[6].second+labelingTimes[7].second+labelingTimes[8].second)/3000.0 << " & "; 
-    f << (constraintTimes[6].second+constraintTimes[7].second+constraintTimes[8].second)/3000.0 << " & "; 
+*/
+    f << (labelingTimes[i+6].second+labelingTimes[i+7].second+labelingTimes[i+8].second)/3000.0 << " & "; 
+   /* f << (constraintTimes[6].second+constraintTimes[7].second+constraintTimes[8].second)/3000.0 << " & "; 
     f << (backtracks[6].second+backtracks[7].second+backtracks[8].second)/3.0 << " & ";
-
-    f << (labelingTimes[9].second+labelingTimes[10].second+labelingTimes[11].second)/3000.0 << "&";
-    f << (constraintTimes[9].second+constraintTimes[10].second+constraintTimes[11].second)/3000.0 << "&"; 
+*/
+    f << (labelingTimes[i+9].second+labelingTimes[i+10].second+labelingTimes[i+11].second)/3000.0 << "&";
+   /* f << (constraintTimes[9].second+constraintTimes[10].second+constraintTimes[11].second)/3000.0 << "&"; 
     f << (backtracks[9].second+backtracks[10].second+backtracks[11].second)/3.0 << "\\\\" << endl;
+*/
 
-    f << "\\hline" << endl;
+    f << (labelingTimes[i+12].second+labelingTimes[i+13].second+labelingTimes[i+14].second)/3000.0 << " & "; 
+
+    
+    f << (labelingTimes[i+15].second+labelingTimes[i+16].second+labelingTimes[i+17].second)/3000.0 << " & "; 
+    
+    f << (labelingTimes[i+18].second+labelingTimes[i+19].second+labelingTimes[i+20].second)/3000.0 << " & "; 
+    
+    f << (labelingTimes[i+21].second+labelingTimes[i+22].second+labelingTimes[i+23].second)/3000.0 << " & "; 
+    
+    f << (labelingTimes[i+24].second+labelingTimes[i+25].second+labelingTimes[i+26].second)/3000.0 << "\\\\" << endl; 
+
+    //f << "\\hline" << endl;
 }
 
-void writeGraphs(unordered_set<FileInfo*, FileInfoHashFunction, FileInfoComparator> &fileInfo){
+void writeGraphs(set<FileInfo*, FileInfoComparator> &fileInfo){
     ofstream f1("labelingTimes_complete.txt");
     ofstream f2("constraintsTimes_complete.txt");
     ofstream f3("backtracks_without_complete.txt");
