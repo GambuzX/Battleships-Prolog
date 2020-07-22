@@ -183,22 +183,16 @@ int main(int argc, char* argv[]){
         line = line.substr(line.find("-")+2);
 
         string variable = line.substr(0, line.find(" "));
-
-        /*if(variable == "leftmost"){ // Delete leftmost from the graph 
-            continue;
-        }*/
-
         line = line.substr(line.find("-")+2);
 
         string value = line.substr(0, line.find(" "));
         line = line.substr(line.find("-")+2);
         
-        /*if(value == "enum"){  // Delete enum from the graph 
-            continue;
-        }*/
-
         string order = line.substr(0, line.find(" "));
         line = line.substr(line.find(":")+2);
+
+        if(!((variable=="ff"||variable=="leftmost") && value=="bisect" && order =="down"))
+            continue;
 
         int labelingTime = stoi(line.substr(0, line.find("ms")));
         line = line.substr(line.find(":")+2);
@@ -316,7 +310,7 @@ void writeTableRow(ofstream & f, vector<pair<int, int>> labelingTimes, vector<pa
 void writeGraphs(set<FileInfo*, FileInfoComparator> &fileInfo){
     ofstream f1("labelingTimes_complete.txt");
     ofstream f2("constraintsTimes_complete.txt");
-    ofstream f3("backtracks_without_complete.txt");
+    ofstream f3("backtracks_complete.txt");
 
     size_t color_index = 0;
 
